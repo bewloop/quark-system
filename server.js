@@ -76,12 +76,21 @@ async function initDB() {
   console.log('✅ DB initialized');
 }
 
+
 /* ================= BASIC ================= */
 
 app.set('trust proxy', 1);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.get('/', (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login.html');
+  }
+  res.redirect('/index.html');
+});
+
 app.use(express.static('public'));
 
 app.use(session({
