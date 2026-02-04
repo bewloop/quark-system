@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<title>New Order | QUARK</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+}
+
+header {
+  background: #111;
+  color: #fff;
+  padding: 16px 20px;
+  font-size: 18px;
+}
+
+.container {
+  max-width: 700px;
+  margin: 20px auto;
+  background: #fff;
+  padding: 24px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+h2 {
+  margin-top: 0;
+}
+
+.form-group {
+  margin-bottom: 14px;
+}
+
+label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  padding: 12px 18px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.save {
+  background: #111;
+  color: #fff;
+}
+
+.cancel {
+  background: #ddd;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  ➕ New Order
+</header>
+
+<div class="container">
+  <h2>สร้างคำสั่งซื้อใหม่</h2>
+
+  <div class="form-group">
+    <label>วันที่</label>
+    <input type="date" id="order_date" disabled>
+  </div>
+
+  <div class="form-group">
+    <label>รุ่นรถ</label>
+    <input id="car_model" placeholder="เช่น Toyota Camry">
+  </div>
+
+  <div class="row">
+    <div class="form-group">
+      <label>ปีรถ</label>
+      <input id="car_year" placeholder="2023">
+    </div>
+
+    <div class="form-group">
+      <label>ประเภทพรม</label>
+      <select id="mat_type">
+        <option value="">-- เลือก --</option>
+        <option>พรม 6D</option>
+        <option>พรมกระดุม</option>
+        <option>พรมดักฝุ่น</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="form-group">
+      <label>สีพรม</label>
+      <input id="mat_color">
+    </div>
+
+    <div class="form-group">
+      <label>จำนวนชิ้นพรม</label>
+      <input id="mat_qty" type="number" min="1">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>ช่องทางสั่งซื้อ</label>
+    <input id="channel" placeholder="Shopee / Line / Walk-in">
+  </div>
+
+  <div class="form-group">
+    <label>ชื่อลูกค้า</label>
+    <input id="customer">
+  </div>
+
+  <div class="form-group">
+    <label>หมายเหตุ</label>
+    <textarea id="note" rows="3"></textarea>
+  </div>
+
+  <div class="actions">
+    <button class="save" onclick="saveOrder()">บันทึกออเดอร์</button>
+    <button class="cancel" onclick="location.href='index.html'">ยกเลิก</button>
+  </div>
+</div>
+
+<script>
+document.getElementById('order_date').value =
+  new Date().toISOString().slice(0,10);
+
+async function saveOrder() {
+  const data = {
+    car_model: car_model.value.trim(),
+    car_year: car_year.value.trim(),
+    mat_type: mat_type.value,
+    mat_color: mat_color.value.trim(),
+    mat_qty: mat_qty.value,
+    channel: channel.value.trim(),
+    customer: customer.value.trim(),
+    note: note.value.trim()
+  };
+
+  if (!data.car_model || !data.mat_type || !data.mat_qty) {
+    alert('กรุณากรอกข้อมูลที่จำเป็น');
+    return;
+  }
+
+  const res = await fetch('/api/orders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+
+  if (res.ok) {
+    location.href = 'order.html';
+  } else {
+    alert('บันทึกไม่สำเร็จ');
+  }
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Stock | QUARK</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+}
+
+header {
+  background: #111;
+  color: #fff;
+  padding: 16px 20px;
+  font-size: 18px;
+}
+
+.container {
+  padding: 20px;
+}
+
+.actions {
+  margin-bottom: 10px;
+}
+
+button {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+th, td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+th {
+  background: #fafafa;
+  text-align: left;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+  background: #fff;
+  width: 90%;
+  max-width: 400px;
+  margin: 10% auto;
+  padding: 20px;
+}
+
+.modal-content input, select {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<header>📦 Stock Management</header>
+
+<div class="container">
+
+  <div class="actions">
+    <button onclick="openModal()">➕ เพิ่มสต็อก</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th><input type="checkbox"></th>
+        <th>รุ่นรถ</th>
+        <th>ปี</th>
+        <th>ประเภทพรม</th>
+        <th>สีพรม</th>
+        <th>จำนวน</th>
+        <th>หมายเหตุ</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3>เพิ่มสต็อก</h3>
+    <input id="car" placeholder="รุ่นรถ">
+    <input id="year" placeholder="ปีรถ">
+    <select id="type">
+      <option>พรม 6D</option>
+      <option>พรมกระดุม</option>
+      <option>พรมดักฝุ่น</option>
+    </select>
+    <input id="color" placeholder="สีพรม">
+    <input id="qty" placeholder="จำนวน">
+    <input id="note" placeholder="หมายเหตุ">
+    <button onclick="saveStock()">บันทึก</button>
+    <button onclick="closeModal()">ยกเลิก</button>
+  </div>
+</div>
+
+<script>
+async function loadStock() {
+  const res = await fetch('/api/stock');
+  const data = await res.json();
+
+  rows.innerHTML = '';
+  data.forEach(s => {
+    rows.innerHTML += `
+      <tr>
+        <td><input type="checkbox"></td>
+        <td>${s.car_model}</td>
+        <td>${s.car_year}</td>
+        <td>${s.mat_type}</td>
+        <td>${s.mat_color}</td>
+        <td>${s.mat_qty}</td>
+        <td>${s.note || '-'}</td>
+      </tr>
+    `;
+  });
+}
+
+function openModal() {
+  modal.style.display = 'block';
+}
+function closeModal() {
+  modal.style.display = 'none';
+}
+
+async function saveStock() {
+  await fetch('/api/stock', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      car_model: car.value,
+      car_year: year.value,
+      mat_type: type.value,
+      mat_color: color.value,
+      mat_qty: qty.value,
+      note: note.value
+    })
+  });
+
+  closeModal();
+  loadStock();
+}
+
+loadStock();
+</script>
+
+</body>
+</html>

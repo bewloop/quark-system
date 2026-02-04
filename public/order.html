@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Orders | QUARK</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+}
+
+header {
+  background: #111;
+  color: #fff;
+  padding: 16px 20px;
+  font-size: 18px;
+}
+
+.container {
+  padding: 20px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+input, select, button {
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+button {
+  cursor: pointer;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+th, td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+}
+
+th {
+  background: #fafafa;
+  text-align: left;
+}
+
+tr:hover {
+  background: #f9f9f9;
+  cursor: pointer;
+}
+
+.actions button {
+  margin-right: 5px;
+}
+
+.status {
+  font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  📋 Orders
+</header>
+
+<div class="container">
+
+  <div class="toolbar">
+    <input type="date" id="filterDate">
+    <select id="filterStatus">
+      <option value="">ทุกสถานะ</option>
+      <option>ตัด</option>
+      <option>ประกบ</option>
+      <option>กุ๊น</option>
+      <option>QC</option>
+      <option>ส่งออก</option>
+      <option>ยกเลิก</option>
+    </select>
+    <button onclick="loadOrders()">Filter</button>
+    <button onclick="printSelected()">🖨 Print</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th><input type="checkbox" onclick="toggleAll(this)"></th>
+        <th>รุ่นรถ</th>
+        <th>สีพรม</th>
+        <th>ช่องทาง</th>
+        <th>ลูกค้า</th>
+        <th>สถานะ</th>
+        <th>จัดการ</th>
+      </tr>
+    </thead>
+    <tbody id="orderBody"></tbody>
+  </table>
+
+</div>
+
+<script>
+let orders = [];
+
+async function loadOrders() {
+  const res = await fetch('/api/orders');
+  orders = await res.json();
+  render();
+}
+
+function render() {
+  const body = document.getElementById('orderBody');
+  body.innerHTML = '';
+
+  const d = filterDate.value;
+  const s = filterStatus.value;
+
+  orders
+    .filter(o => !d || o.order_date === d)
+    .filter(o => !s || o.status === s)
+    .forEach(o => {
+      const tr = document.createElement('tr');
+      tr.onclick = e => {
+        if (e.target.type !== 'checkbox' && e.target.tagName !== 'BUTTON') {
+          location.href = `order-detail.html?id=${o.id}`;
+        }
+      };
+
+      tr.innerHTML = `
+        <td><input type="checkbox" class="chk" value="${o.id}"></td>
+        <td>${o.car_model}</td>
+        <td>${o.mat_color}</td>
+        <td>${o.channel}</td>
+        <td>${o.customer}</td>
+        <td class="status">${o.status}</td>
+        <td class="actions">
+          <button onclick="event.stopPropagation()">✏️</button>
+          <button onclick="event.stopPropagation()">🗑</button>
+        </td>
+      `;
+      body.appendChild(tr);
+    });
+}
+
+function toggleAll(el) {
+  document.querySelectorAll('.chk')
+    .forEach(c => c.checked = el.checked);
+}
+
+function printSelected() {
+  const ids = [...document.querySelectorAll('.chk:checked')]
+    .map(c => c.value);
+  if (!ids.length) {
+    alert('เลือกออเดอร์ก่อน');
+    return;
+  }
+  location.href = '/print.html?ids=' + ids.join(',');
+}
+
+loadOrders();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "quark-system",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.0",
+    "body-parser": "^2.2.2",
+    "express": "^4.22.1",
+    "express-session": "^1.19.0",
+    "pg": "^8.18.0",
+    "qrcode": "^1.5.4",
+    "sqlite3": "^5.1.6"
+  }
+}

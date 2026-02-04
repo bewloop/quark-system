@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<title>QUARK | Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+}
+
+header {
+  background: #111;
+  color: #fff;
+  padding: 16px 20px;
+  font-size: 20px;
+}
+
+.container {
+  padding: 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 24px;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: transform .15s, box-shadow .15s;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+.card h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.logout {
+  position: absolute;
+  right: 20px;
+  top: 18px;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.8;
+}
+.logout:hover { opacity: 1; }
+</style>
+</head>
+
+<body>
+
+<header>
+  QUARK – Internal System
+  <span class="logout" onclick="logout()">Logout</span>
+</header>
+
+<div class="container">
+  <div class="grid">
+
+    <div class="card" onclick="go('new-order.html')">
+      <h3>➕ New Order</h3>
+    </div>
+
+    <div class="card" onclick="go('order.html')">
+      <h3>📋 Orders</h3>
+    </div>
+
+    <div class="card" onclick="go('stock.html')">
+      <h3>📦 Stock</h3>
+    </div>
+
+    <div class="card" onclick="go('admin-performance.html')">
+      <h3>📊 Performance</h3>
+    </div>
+
+    <div class="card" onclick="go('users.html')">
+      <h3>👤 Users</h3>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function go(page) {
+  location.href = '/' + page;
+}
+
+async function logout() {
+  await fetch('/logout');
+  location.href = '/login.html';
+}
+</script>

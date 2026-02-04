@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Order Detail | QUARK</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+}
+
+header {
+  background: #111;
+  color: #fff;
+  padding: 16px 20px;
+  font-size: 18px;
+}
+
+.container {
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
+}
+
+.card {
+  background: #fff;
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: 6px;
+}
+
+.row {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.label {
+  color: #666;
+}
+
+select, button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+button {
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+#qrcode {
+  margin-top: 10px;
+  text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  📄 Order Detail
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <div class="row"><span class="label">ลูกค้า:</span> <span id="customer"></span></div>
+    <div class="row"><span class="label">รุ่นรถ:</span> <span id="car"></span></div>
+    <div class="row"><span class="label">สีพรม:</span> <span id="color"></span></div>
+    <div class="row"><span class="label">ช่องทาง:</span> <span id="channel"></span></div>
+  </div>
+
+  <div class="card">
+    <div class="label">สถานะการผลิต</div>
+    <select id="status">
+      <option>ตัด</option>
+      <option>ประกบ</option>
+      <option>กุ๊น</option>
+      <option>QC</option>
+      <option>ส่งออก</option>
+      <option>ยกเลิก</option>
+    </select>
+    <button onclick="saveStatus()">💾 บันทึกสถานะ</button>
+  </div>
+
+  <div class="card">
+    <div class="label">QR สำหรับออเดอร์นี้</div>
+    <div id="qrcode"></div>
+  </div>
+
+  <div class="actions">
+    <button onclick="history.back()">⬅ กลับ</button>
+    <button onclick="printOrder()">🖨 พิมพ์</button>
+  </div>
+
+</div>
+
+<script>
+const id = new URLSearchParams(location.search).get('id');
+
+async function loadOrder() {
+  const res = await fetch('/api/orders/' + id);
+  const o = await res.json();
+
+  customer.textContent = o.customer;
+  car.textContent = o.car_model;
+  color.textContent = o.mat_color;
+  channel.textContent = o.channel;
+  status.value = o.status;
+
+  new QRCode(document.getElementById("qrcode"), {
+    text: location.href,
+    width: 120,
+    height: 120
+  });
+}
+
+async function saveStatus() {
+  await fetch('/api/orders/' + id + '/status', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: status.value })
+  });
+  alert('บันทึกแล้ว');
+}
+
+function printOrder() {
+  location.href = '/print.html?ids=' + id;
+}
+
+loadOrder();
+</script>
+
+</body>
+</html>

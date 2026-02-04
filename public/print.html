@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Print | QUARK</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+<style>
+@page {
+  size: A5;
+  margin: 10mm;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+}
+
+.page {
+  page-break-after: always;
+  border: 1px solid #000;
+  padding: 12px;
+  height: 100%;
+}
+
+.header {
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.row {
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.label {
+  font-weight: bold;
+}
+
+.qr {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.status {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.status span {
+  display: inline-block;
+  margin-right: 10px;
+  border: 1px solid #000;
+  padding: 4px 6px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="pages"></div>
+
+<script>
+const ids = new URLSearchParams(location.search).get('ids').split(',');
+
+async function load() {
+  for (const id of ids) {
+    const res = await fetch('/api/orders/' + id);
+    const o = await res.json();
+
+    const page = document.createElement('div');
+    page.className = 'page';
+
+    page.innerHTML = `
+      <div class="header">ใบสั่งงานฝ่ายผลิต</div>
+
+      <div class="row"><span class="label">Order #:</span> ${o.order_no}</div>
+      <div class="row"><span class="label">วันที่:</span> ${o.order_date}</div>
+      <div class="row"><span class="label">ลูกค้า:</span> ${o.customer}</div>
+      <div class="row"><span class="label">รถ:</span> ${o.car_model} (${o.car_year})</div>
+      <div class="row"><span class="label">ประเภทพรม:</span> ${o.mat_type}</div>
+      <div class="row"><span class="label">สีพรม:</span> ${o.mat_color}</div>
+      <div class="row"><span class="label">จำนวน:</span> ${o.mat_qty}</div>
+      <div class="row"><span class="label">หมายเหตุ:</span> ${o.note || '-'}</div>
+
+      <div class="status">
+        <span>ตัด</span>
+        <span>ประกบ</span>
+        <span>กุ๊น</span>
+        <span>QC</span>
+        <span>ส่งออก</span>
+      </div>
+
+      <div class="qr" id="qr-${id}"></div>
+    `;
+
+    document.getElementById('pages').appendChild(page);
+
+    new QRCode(document.getElementById('qr-' + id), {
+      text: location.origin + '/order-detail.html?id=' + id,
+      width: 100,
+      height: 100
+    });
+  }
+
+  setTimeout(() => window.print(), 500);
+}
+
+load();
+</script>
+
+</body>
+</html>
