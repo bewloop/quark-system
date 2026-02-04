@@ -93,7 +93,7 @@
     <form id="orderForm">
 
       <label>วันที่สั่งงาน</label>
-      <input type="date" name="order_date" required>
+      <input type="date" name="order_date" id="orderDate" readonly required>
 
       <label>ช่องทางขาย</label>
       <select name="channel">
@@ -212,6 +212,10 @@
         alert('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้');
       }
     });
+
+     // 🔒 FIX วันที่เป็นวันนี้
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('orderDate').value = today;
   </script>
 
 </body>

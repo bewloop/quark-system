@@ -39,7 +39,7 @@ async function initDB() {
       customer TEXT,
       payment_status TEXT DEFAULT 'จ่ายแล้ว',
       note TEXT,
-      status TEXT,
+      production_status TEXT DEFAULT 'สั่งงาน',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
@@ -179,23 +179,39 @@ app.post('/api/orders', auth(['admin', 'quarkmgr']), async (req, res) => {
   const orderNo = `QK-${year}${String(nextRun).padStart(4, '0')}`;
 
   const r = await pool.query(`
-    INSERT INTO orders
-    (order_no, order_date, car_model, car_year, mat_type, mat_color, mat_qty, channel, customer, payment_status, note, status)
-    VALUES
-    ($1, current_date, $2,$3,$4,$5,$6,$7,$8,$9,$10,'ตัด')
-    RETURNING id, order_no
-  `, [
-    orderNo,
-    o.car_model,
-    o.car_year,
-    o.mat_type,
-    o.mat_color,
-    o.mat_qty,
-    o.channel,
-    o.customer,
-    o.payment_status,
-    o.note
-  ]);
+  INSERT INTO orders (
+    order_no,
+    order_date,
+    car_model,
+    car_year,
+    mat_type,
+    mat_color,
+    mat_qty,
+    channel,
+    customer,
+    payment_status,
+    note,
+    production_status
+  )
+  VALUES (
+    $1,
+    CURRENT_DATE,
+    $2,$3,$4,$5,$6,$7,$8,$9,$10,
+    'สั่งงาน'
+  )
+  RETURNING id, order_no
+`, [
+  orderNo,
+  o.car_model,
+  o.car_year,
+  o.mat_type,
+  o.mat_color,
+  o.mat_qty,
+  o.channel,
+  o.customer,
+  o.payment_status,
+  o.note
+]);
 
   res.json({ ok: true, id: r.rows[0].id, order_no: r.rows[0].order_no });
 });
@@ -219,31 +235,29 @@ app.put('/api/orders/:id', auth(['admin','quarkmgr']), async (req, res) => {
     const o = req.body;
 
     await pool.query(`
-      UPDATE orders SET
-        order_date = $1,
-        channel = $2,
-        customer = $3,
-        car_model = $4,
-        car_year = $5,
-        mat_color = $6,
-        mat_type = $7,
-        mat_qty = $8,
-        payment_status = $9,
-        note = $10
-      WHERE id = $11
-    `, [
-      o.order_date,
-      o.channel,
-      o.customer,
-      o.car_model,
-      o.car_year,
-      o.mat_color,
-      o.mat_type,
-      o.mat_qty,
-      o.payment_status,
-      o.note,
-      req.params.id
-    ]);
+  UPDATE orders SET
+    channel = $1,
+    customer = $2,
+    car_model = $3,
+    car_year = $4,
+    mat_color = $5,
+    mat_type = $6,
+    mat_qty = $7,
+    payment_status = $8,
+    note = $9
+  WHERE id = $10
+`, [
+  o.channel,
+  o.customer,
+  o.car_model,
+  o.car_year,
+  o.mat_color,
+  o.mat_type,
+  o.mat_qty,
+  o.payment_status,
+  o.note,
+  req.params.id
+]);
 
     res.json({ ok: true });
   } catch (err) {
@@ -254,38 +268,43 @@ app.put('/api/orders/:id', auth(['admin','quarkmgr']), async (req, res) => {
 
 /* ================= STATUS ================= */
 
-const STATUS_FLOW = ['ตัด','ประกบ','กุ๊น','QC','ส่งออก','ยกเลิก'];
+const PRODUCTION_STATUS = [
+  'สั่งงาน',
+  'ตัด',
+  'ประกบ',
+  'กุ๊น',
+  'QC',
+  'ส่งออก',
+  'เข้าสต็อก',
+  'ยกเลิก'
+];
 
-app.put('/api/orders/:id/status', auth(), async (req, res) => {
-  const { status } = req.body;
-  const user = req.session.user;
 
-  const r = await pool.query(
-    'select status from orders where id=$1',
-    [req.params.id]
-  );
+app.put(
+  '/api/orders/:id/production-status',
+  auth(['admin','quarkmgr']),
+  async (req, res) => {
 
-  const current = r.rows[0].status;
+    const { id } = req.params;
+    const { production_status } = req.body;
 
-  if (
-    STATUS_FLOW.indexOf(status) !== STATUS_FLOW.indexOf(current) + 1 &&
-    status !== 'ยกเลิก'
-  ) {
-    return res.status(400).json({ error: 'invalid status flow' });
+    if (!PRODUCTION_STATUS.includes(production_status)) {
+      return res.status(400).json({ error: 'invalid production status' });
+    }
+
+    await pool.query(
+      'UPDATE orders SET production_status=$1 WHERE id=$2',
+      [production_status, id]
+    );
+
+    await pool.query(
+      'INSERT INTO order_status_log (order_id, status, user_id) VALUES ($1,$2,$3)',
+      [id, production_status, req.session.user.id]
+    );
+
+    res.json({ ok: true });
   }
-
-  await pool.query(
-    'update orders set status=$1 where id=$2',
-    [status, req.params.id]
-  );
-
-  await pool.query(`
-    insert into order_status_log (order_id, status, user_id)
-    values ($1,$2,$3)
-  `, [req.params.id, status, user.id]);
-
-  res.json({ ok: true });
-});
+);
 
 /* ================= STOCK ================= */
 
