@@ -6,164 +6,234 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+* { box-sizing: border-box; }
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f5f5f5;
+  background: #f2f2f2;
 }
 
-header {
-  background: #111;
+.page {
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.top-bar button {
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 8px;
+  border: none;
+  background: #000;
   color: #fff;
-  padding: 16px 20px;
-  font-size: 18px;
-}
-
-.container {
-  padding: 20px;
-}
-
-.actions {
-  margin-bottom: 10px;
-}
-
-button {
-  padding: 8px 12px;
   cursor: pointer;
+}
+
+.top-bar button:hover { opacity: .85; }
+
+.card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.05);
+}
+
+h1 {
+  text-align: center;
+  margin: 10px 0 25px;
+  font-size: 28px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.search-box input {
+  width: 260px;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-add {
+  background: #000;
+  color: #fff;
+}
+
+.btn-out {
+  background: #e53935;
+  color: #fff;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
+  font-size: 13px;
+}
+
+thead tr { background: #000; }
+
+thead th {
+  color: #fff;
+  font-weight: bold;
 }
 
 th, td {
-  padding: 10px;
+  padding: 12px 10px;
   border-bottom: 1px solid #eee;
-  font-size: 14px;
-}
-
-th {
-  background: #fafafa;
-  text-align: left;
+  white-space: nowrap;
 }
 
 .modal {
-  display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0,0,0,.35);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
 }
 
-.modal-content {
+.modal-box {
   background: #fff;
-  width: 90%;
-  max-width: 400px;
-  margin: 10% auto;
-  padding: 20px;
-}
-
-.modal-content input, select {
-  width: 100%;
-  padding: 8px;
-  margin-bottom: 10px;
+  padding: 22px;
+  width: 360px;
+  border-radius: 12px;
 }
 </style>
 </head>
 
 <body>
 
-<header>📦 Stock Management</header>
+<div class="page">
 
-<div class="container">
-
-  <div class="actions">
-    <button onclick="openModal()">➕ เพิ่มสต็อก</button>
+  <div class="top-bar">
+    <button onclick="location.href='index.html'">กลับหน้าแรก</button>
+    <button onclick="logout()">Log out</button>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th><input type="checkbox"></th>
-        <th>รุ่นรถ</th>
-        <th>ปี</th>
-        <th>ประเภทพรม</th>
-        <th>สีพรม</th>
-        <th>จำนวน</th>
-        <th>หมายเหตุ</th>
-      </tr>
-    </thead>
-    <tbody id="rows"></tbody>
-  </table>
+  <div class="card">
 
-</div>
+    <h1>สต็อกสินค้า</h1>
 
-<!-- MODAL -->
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <h3>เพิ่มสต็อก</h3>
-    <input id="car" placeholder="รุ่นรถ">
-    <input id="year" placeholder="ปีรถ">
-    <select id="type">
-      <option>พรม 6D</option>
-      <option>พรมกระดุม</option>
-      <option>พรมดักฝุ่น</option>
-    </select>
-    <input id="color" placeholder="สีพรม">
-    <input id="qty" placeholder="จำนวน">
-    <input id="note" placeholder="หมายเหตุ">
-    <button onclick="saveStock()">บันทึก</button>
-    <button onclick="closeModal()">ยกเลิก</button>
+    <div class="toolbar">
+      <div class="search-box">
+        <input id="searchInput" placeholder="ค้นหารุ่นรถ...">
+      </div>
+      <button class="btn btn-add" onclick="openModal()">➕ เพิ่มสต็อก</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Stock no.</th>
+          <th>รุ่นรถ</th>
+          <th>ปีรถ</th>
+          <th>ประเภทพรม</th>
+          <th>สีพรม</th>
+          <th>วันที่รับเข้า</th>
+          <th>วันที่เบิกออก</th>
+          <th>จัดการ</th>
+        </tr>
+      </thead>
+      <tbody id="stockBody">
+        <tr><td colspan="8">กำลังโหลด...</td></tr>
+      </tbody>
+    </table>
+
   </div>
 </div>
 
 <script>
-async function loadStock() {
-  const res = await fetch('/api/stock');
-  const data = await res.json();
+let allStock = [];
 
-  rows.innerHTML = '';
-  data.forEach(s => {
-    rows.innerHTML += `
+async function authFetch(url, options = {}) {
+  options.headers = { 'Content-Type': 'application/json' };
+  const res = await fetch(url, options);
+  if (res.status === 401) location.href = '/login.html';
+  return res;
+}
+
+function logout() {
+  localStorage.clear();
+  location.href = '/login.html';
+}
+
+function formatDate(d) {
+  if (!d) return '-';
+  return new Date(d).toLocaleDateString('th-TH');
+}
+
+async function loadStock() {
+  const res = await authFetch('/api/stock');
+  const rows = await res.json();
+  allStock = rows.filter(s => s.status !== 'out');
+  applySearch();
+}
+
+function applySearch() {
+  const q = searchInput.value.toLowerCase();
+  const list = allStock.filter(s =>
+    !q || (s.car_model || '').toLowerCase().includes(q)
+  );
+  renderTable(list);
+}
+
+function renderTable(list) {
+  const body = document.getElementById('stockBody');
+  body.innerHTML = '';
+
+  if (!list.length) {
+    body.innerHTML = '<tr><td colspan="8">ไม่พบข้อมูล</td></tr>';
+    return;
+  }
+
+  list.forEach(s => {
+    body.innerHTML += `
       <tr>
-        <td><input type="checkbox"></td>
-        <td>${s.car_model}</td>
-        <td>${s.car_year}</td>
-        <td>${s.mat_type}</td>
-        <td>${s.mat_color}</td>
-        <td>${s.mat_qty}</td>
-        <td>${s.note || '-'}</td>
+        <td>${s.id}</td>
+        <td>${s.car_model || ''}</td>
+        <td>${s.car_year || ''}</td>
+        <td>${s.mat_type || ''}</td>
+        <td>${s.mat_color || ''}</td>
+        <td>${formatDate(s.stock_in_date)}</td>
+        <td>${formatDate(s.stock_out_date)}</td>
+        <td>
+          <button class="btn btn-out" onclick="cutStock(${s.id})">ตัดสต็อก</button>
+        </td>
       </tr>
     `;
   });
 }
 
-function openModal() {
-  modal.style.display = 'block';
-}
-function closeModal() {
-  modal.style.display = 'none';
-}
-
-async function saveStock() {
-  await fetch('/api/stock', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      car_model: car.value,
-      car_year: year.value,
-      mat_type: type.value,
-      mat_color: color.value,
-      mat_qty: qty.value,
-      note: note.value
-    })
-  });
-
-  closeModal();
+async function cutStock(id) {
+  if (!confirm('ยืนยันตัดสต็อก?')) return;
+  await authFetch('/api/stock/' + id + '/out', { method: 'PATCH' });
   loadStock();
 }
 
+searchInput.oninput = applySearch;
 loadStock();
 </script>
 
