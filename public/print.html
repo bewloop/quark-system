@@ -2,115 +2,281 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Print | QUARK</title>
+<title>QUARK – ใบงานฝ่ายผลิต</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
 <style>
+* { box-sizing: border-box; }
+
 @page {
   size: A5;
-  margin: 10mm;
+  margin: 5mm;
 }
 
 body {
-  font-family: Arial, sans-serif;
   margin: 0;
+  font-family: Arial, sans-serif;
+  color: #000;
+  background: #f5f5f5;
 }
 
-.page {
-  page-break-after: always;
-  border: 1px solid #000;
-  padding: 12px;
-  height: 100%;
-}
-
-.header {
+/* ===== UI MODE ===== */
+header {
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  padding: 14px 20px;
   font-size: 18px;
   font-weight: bold;
+}
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  padding: 15px 20px;
+}
+
+button {
+  padding: 8px 14px;
+  font-size: 13px;
+  border: 1px solid #aaa;
+  background: #fff;
+  cursor: pointer;
+}
+
+button:hover { background: #eee; }
+
+/* ===== PRINT AREA ===== */
+#printArea {
+  padding: 20px;
+}
+
+/* หน้า A5 */
+.page {
+  width: 148mm;
+  height: 210mm;
+  page-break-after: always;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* ใบงาน (ครึ่งหน้า) */
+.workorder {
+  height: 98mm;
+  border: 1px solid #000;
+  padding: 6px;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+/* เส้นตัด */
+.cut-line {
   text-align: center;
-  margin-bottom: 8px;
+  font-size: 10px;
+  margin: 2mm 0;
+  border-top: 1px dashed #000;
 }
 
-.row {
-  font-size: 14px;
-  margin-bottom: 6px;
-}
-
-.label {
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   font-weight: bold;
 }
 
-.qr {
-  margin-top: 10px;
-  text-align: center;
+.logo { font-size: 16px; }
+.order-no { font-size: 12px; }
+
+/* QR */
+.barcode {
+  width: 72px;
+  height: 72px;
 }
 
-.status {
-  margin-top: 10px;
-  font-size: 14px;
+.barcode div {
+  width: 70px;
+  height: 70px;
 }
 
-.status span {
-  display: inline-block;
-  margin-right: 10px;
+/* Section */
+.section {
+  margin-top: 5px;
+}
+
+.section-title {
+  font-weight: bold;
+  border-bottom: 1px solid #000;
+  margin-bottom: 3px;
+  font-size: 11px;
+}
+
+/* Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+td, th {
   border: 1px solid #000;
-  padding: 4px 6px;
+  padding: 2px 3px;
+}
+
+/* Footer */
+.footer {
+  margin-top: 5px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+}
+
+/* PRINT MODE */
+@media print {
+  body { background: #fff; }
+  header, .toolbar { display: none; }
+  #printArea { padding: 0; }
 }
 </style>
 </head>
 
 <body>
 
-<div id="pages"></div>
+<header>QUARK – พิมพ์ใบงาน</header>
+
+<div class="toolbar">
+  <button onclick="window.print()">🖨 พิมพ์</button>
+  <button onclick="history.back()">← กลับ</button>
+</div>
+
+<div id="printArea">กำลังโหลดข้อมูล...</div>
 
 <script>
-const ids = new URLSearchParams(location.search).get('ids').split(',');
-
-async function load() {
-  for (const id of ids) {
-    const res = await fetch('/api/orders/' + id);
-    const o = await res.json();
-
-    const page = document.createElement('div');
-    page.className = 'page';
-
-    page.innerHTML = `
-      <div class="header">ใบสั่งงานฝ่ายผลิต</div>
-
-      <div class="row"><span class="label">Order #:</span> ${o.order_no}</div>
-      <div class="row"><span class="label">วันที่:</span> ${o.order_date}</div>
-      <div class="row"><span class="label">ลูกค้า:</span> ${o.customer}</div>
-      <div class="row"><span class="label">รถ:</span> ${o.car_model} (${o.car_year})</div>
-      <div class="row"><span class="label">ประเภทพรม:</span> ${o.mat_type}</div>
-      <div class="row"><span class="label">สีพรม:</span> ${o.mat_color}</div>
-      <div class="row"><span class="label">จำนวน:</span> ${o.mat_qty}</div>
-      <div class="row"><span class="label">หมายเหตุ:</span> ${o.note || '-'}</div>
-
-      <div class="status">
-        <span>ตัด</span>
-        <span>ประกบ</span>
-        <span>กุ๊น</span>
-        <span>QC</span>
-        <span>ส่งออก</span>
-      </div>
-
-      <div class="qr" id="qr-${id}"></div>
-    `;
-
-    document.getElementById('pages').appendChild(page);
-
-    new QRCode(document.getElementById('qr-' + id), {
-      text: location.origin + '/order-detail.html?id=' + id,
-      width: 100,
-      height: 100
-    });
-  }
-
-  setTimeout(() => window.print(), 500);
+async function authFetch(url) {
+  const res = await fetch(url, { credentials: 'include' });
+  if (res.status === 401) location.href = '/login.html';
+  return res;
 }
 
-load();
+function qs(name) {
+  return new URLSearchParams(location.search).get(name);
+}
+
+const safe = v => v ?? '-';
+const formatDate = d => {
+  if (!d) return '-';
+  const date = new Date(d);
+  if (isNaN(date)) return d;
+  return date.toLocaleDateString('th-TH');
+};
+
+async function loadPrint() {
+  const idsParam = qs('ids');
+  if (!idsParam) {
+    document.getElementById('printArea').innerHTML = 'ไม่พบออเดอร์';
+    return;
+  }
+
+  // ✅ แปลง ids ที่เลือกเป็น array
+  const selectedIds = idsParam.split(',').map(id => String(id));
+
+  // ✅ ดึง order ทั้งหมด
+  const res = await authFetch('/api/orders');
+  const allOrders = await res.json();
+
+  // ✅ FILTER เฉพาะที่ติ๊กเลือก
+  const orders = allOrders.filter(o =>
+    selectedIds.includes(String(o.id))
+  );
+
+  const area = document.getElementById('printArea');
+  area.innerHTML = '';
+
+  for (let i = 0; i < orders.length; i += 2) {
+    area.innerHTML += `
+      <div class="page">
+        ${renderOrder(orders[i], i)}
+        ${orders[i + 1] ? '<div class="cut-line">✂ ตัดตามเส้นนี้</div>' : ''}
+        ${orders[i + 1] ? renderOrder(orders[i + 1], i + 1) : ''}
+      </div>
+    `;
+  }
+}
+
+function renderOrder(o, idx) {
+  const qrId = `qr-${idx}`;
+
+  requestAnimationFrame(() => {
+    const el = document.getElementById(qrId);
+    if (el) {
+      new QRCode(el, {
+        text: `${location.origin}/order-detail.html?id=${o.id}`,
+        width: 70,
+        height: 70
+      });
+    }
+  });
+
+  return `
+  <div class="workorder">
+    <div class="header">
+      <div>
+        <div class="logo">QUARK</div>
+        <div class="order-no">ORDER NO: ${safe(o.order_no || o.id)}</div>
+      </div>
+      <div class="barcode"><div id="${qrId}"></div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">ข้อมูลคำสั่งซื้อ</div>
+      <table>
+        <tr>
+          <td>ช่องทาง</td><td>${safe(o.channel)}</td>
+          <td>วันที่</td><td>${formatDate(o.order_date || o.created_at)}</td>
+        </tr>
+        <tr>
+          <td>ลูกค้า</td><td>${safe(o.customer)}</td>
+          <td>หมายเหตุ</td><td>${safe(o.note)}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-title">รายละเอียดสินค้า</div>
+      <table>
+        <tr>
+          <td>รุ่นรถ</td><td>${safe(o.car_model)}</td>
+          <td>ปี</td><td>${safe(o.car_year)}</td>
+        </tr>
+        <tr>
+          <td>สีพรม</td><td>${safe(o.mat_color)}</td>
+          <td>ชนิด</td><td>${safe(o.mat_type)}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-title">ฝ่ายผลิต</div>
+      <table>
+        <tr><th>ขั้นตอน</th><th>ชื่อ / เซ็น</th></tr>
+        <tr><td>ตัด</td><td></td></tr>
+        <tr><td>ประกบ</td><td></td></tr>
+        <tr><td>กุ๊น</td><td></td></tr>
+        <tr><td>QC</td><td></td></tr>
+      </table>
+    </div>
+
+    <div class="footer">
+      <div>ผู้ผลิต: __________</div>
+      <div>วันที่: ___ / ___ / ___</div>
+    </div>
+  </div>
+  `;
+}
+
+loadPrint();
 </script>
 
 </body>

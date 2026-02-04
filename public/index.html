@@ -1,106 +1,198 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8" />
-<title>QUARK | Dashboard</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<title>QUARK – Main Menu</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+* { box-sizing: border-box; }
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f5f5f5;
+  background: #f5f7f8;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-header {
-  background: #111;
+/* ===== top right ===== */
+.top-actions {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+}
+
+.top-actions button {
+  margin-left: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: #000;
   color: #fff;
-  padding: 16px 20px;
-  font-size: 20px;
+  font-size: 12px;
 }
 
+/* ===== container ===== */
 .container {
-  padding: 20px;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
-}
-
-.card {
-  background: #fff;
-  border-radius: 10px;
-  padding: 24px;
-  cursor: pointer;
+  width: 100%;
+  max-width: 460px;
+  padding: 40px 30px;
   text-align: center;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  transition: transform .15s, box-shadow .15s;
 }
 
-.card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+/* ===== logo ===== */
+.logo-img {
+  max-width: 140px;
+  margin-bottom: 12px;
 }
 
-.card h3 {
-  margin: 0;
-  font-size: 18px;
+.title {
+  font-size: 26px;
+  font-weight: bold;
+  margin-bottom: 6px;
 }
 
-.logout {
-  position: absolute;
-  right: 20px;
-  top: 18px;
+.sub {
   font-size: 14px;
-  cursor: pointer;
-  opacity: 0.8;
+  color: #666;
+  margin-bottom: 32px;
 }
-.logout:hover { opacity: 1; }
+
+/* ===== menu card ===== */
+.menu-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px 22px;
+  margin-bottom: 16px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.menu-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px rgba(0,0,0,0.08);
+}
+
+.menu-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.menu-sub {
+  font-size: 14px;
+  color: #666;
+}
+
+/* icon */
+.menu-title span {
+  margin-right: 8px;
+}
+
+footer {
+  margin-top: 24px;
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+}
 </style>
 </head>
 
 <body>
 
-<header>
-  QUARK – Internal System
-  <span class="logout" onclick="logout()">Logout</span>
-</header>
+<div class="top-actions">
+  <button onclick="location.href='index.html'">Back</button>
+  <button onclick="logout()">Logout</button>
+</div>
 
 <div class="container">
-  <div class="grid">
+  <!-- LOGO -->
+  <img src="images/logo.png" class="logo-img" alt="QUARK Logo">
 
-    <div class="card" onclick="go('new-order.html')">
-      <h3>➕ New Order</h3>
-    </div>
+  <div class="title">QUARK</div>
+  <div class="sub">Internal Order System</div>
 
-    <div class="card" onclick="go('order.html')">
-      <h3>📋 Orders</h3>
-    </div>
-
-    <div class="card" onclick="go('stock.html')">
-      <h3>📦 Stock</h3>
-    </div>
-
-    <div class="card" onclick="go('admin-performance.html')">
-      <h3>📊 Performance</h3>
-    </div>
-
-    <div class="card" onclick="go('users.html')">
-      <h3>👤 Users</h3>
-    </div>
-
+  <!-- admin only -->
+  <div id="btn-new" class="menu-card" style="display:none">
+    <div class="menu-title">➕ New Order</div>
+    <div class="menu-sub">สร้างคำสั่งซื้อใหม่</div>
   </div>
+
+  <!-- admin + mgr -->
+  <div id="btn-orders" class="menu-card">
+    <div class="menu-title">📋 Orders</div>
+    <div class="menu-sub">รายการสั่งซื้อทั้งหมด</div>
+  </div>
+
+  <div id="btn-stock" class="menu-card" style="display:none">
+    <div class="menu-title">📦 Stock</div>
+    <div class="menu-sub">สินค้าคงคลัง</div>
+  </div>
+
+  <!-- admin only -->
+  <div id="btn-performance" class="menu-card" style="display:none">
+    <div class="menu-title">📊 Performance</div>
+    <div class="menu-sub">ประสิทธิภาพพนักงาน</div>
+  </div>
+
+  <div id="btn-users" class="menu-card" style="display:none">
+    <div class="menu-title">👤 Manage Users</div>
+    <div class="menu-sub">จัดการผู้ใช้งานระบบ</div>
+  </div>
+
+  <footer>
+    QUARK THAILAND
+  </footer>
 </div>
 
 <script>
-function go(page) {
-  location.href = '/' + page;
+async function logout() {
+  await fetch('/api/logout', {
+  method: 'POST',
+  credentials: 'include'
+});
 }
 
-async function logout() {
-  await fetch('/logout');
-  location.href = '/login.html';
-}
+(async () => {
+  const res = await fetch('/api/me', { credentials: 'include' });
+  if (!res.ok) {
+    location.href = 'login.html';
+    return;
+  }
+
+  const me = await res.json();
+
+  const btnNew = document.getElementById('btn-new');
+  const btnOrders = document.getElementById('btn-orders');
+  const btnStock = document.getElementById('btn-stock');
+  const btnPerformance = document.getElementById('btn-performance');
+  const btnUsers = document.getElementById('btn-users');
+
+  if (me.role === 'admin') {
+    btnNew.style.display = 'block';
+    btnNew.onclick = () => location.href = 'new-order.html';
+
+    btnPerformance.style.display = 'block';
+    btnPerformance.onclick = () => location.href = 'admin-performance.html';
+
+    btnUsers.style.display = 'block';
+    btnUsers.onclick = () => location.href = 'users.html';
+  }
+
+  if (me.role === 'admin' || me.role === 'quarkmgr') {
+    btnStock.style.display = 'block';
+    btnStock.onclick = () => location.href = 'stock.html';
+  }
+
+  btnOrders.onclick = () => location.href = 'order.html';
+})();
 </script>
+
+</body>
+</html>

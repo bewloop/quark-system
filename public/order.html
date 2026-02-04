@@ -6,169 +6,356 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+* { box-sizing: border-box; }
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f5f5f5;
+  background: #f2f2f2;
 }
 
-header {
-  background: #111;
-  color: #fff;
-  padding: 16px 20px;
-  font-size: 18px;
+.page {
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 0 20px;
 }
 
-.container {
-  padding: 20px;
-}
-
-.toolbar {
+/* ===== TOP BAR ===== */
+.top-bar {
   display: flex;
-  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 10px;
   margin-bottom: 12px;
 }
 
-input, select, button {
-  padding: 8px 10px;
+.top-bar button {
+  padding: 6px 14px;
   font-size: 13px;
-}
-
-button {
+  border-radius: 8px;
+  border: none;
+  background: #000;
+  color: #fff;
   cursor: pointer;
 }
 
+.top-bar button:hover { opacity: .85; }
+
+/* ===== CARD ===== */
+.card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.05);
+}
+
+h1 {
+  text-align: center;
+  margin: 10px 0 25px;
+  font-size: 28px;
+}
+
+/* ===== TOOLBAR ===== */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filters select,
+.filters input {
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+/* ===== BUTTONS ===== */
+.actions-top {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-print { background: #000; color: #fff; }
+.btn-edit { background: #1976d2; color: #fff; }
+.btn-delete { background: #e53935; color: #fff; }
+
+/* ===== TABLE ===== */
 table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
-}
-
-th, td {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
   font-size: 13px;
 }
 
-th {
-  background: #fafafa;
-  text-align: left;
-}
+thead tr { background: #000; }
 
-tr:hover {
-  background: #f9f9f9;
-  cursor: pointer;
-}
-
-.actions button {
-  margin-right: 5px;
-}
-
-.status {
+thead th {
+  color: #fff;
   font-weight: bold;
+}
+
+th, td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+}
+
+.checkbox {
+  width: 36px;
+  text-align: center;
+}
+
+/* ===== BADGE ===== */
+.badge {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.badge-paid { background: #2ecc71; color: #fff; }
+.badge-app { background: #3498db; color: #fff; }
+.badge-cod { background: #f39c12; color: #fff; }
+.badge-vat-paid { background: #9b59b6; color: #fff; }
+.badge-vat-pending { background: #e74c3c; color: #fff; }
+
+.order-link {
+  color: #1976d2;
+  font-weight: bold;
+  cursor: pointer;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  📋 Orders
-</header>
+<div class="page">
 
-<div class="container">
-
-  <div class="toolbar">
-    <input type="date" id="filterDate">
-    <select id="filterStatus">
-      <option value="">ทุกสถานะ</option>
-      <option>ตัด</option>
-      <option>ประกบ</option>
-      <option>กุ๊น</option>
-      <option>QC</option>
-      <option>ส่งออก</option>
-      <option>ยกเลิก</option>
-    </select>
-    <button onclick="loadOrders()">Filter</button>
-    <button onclick="printSelected()">🖨 Print</button>
+  <div class="top-bar">
+    <button onclick="location.href='index.html'">กลับหน้าแรก</button>
+    <button onclick="logout()">Log out</button>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th><input type="checkbox" onclick="toggleAll(this)"></th>
-        <th>รุ่นรถ</th>
-        <th>สีพรม</th>
-        <th>ช่องทาง</th>
-        <th>ลูกค้า</th>
-        <th>สถานะ</th>
-        <th>จัดการ</th>
-      </tr>
-    </thead>
-    <tbody id="orderBody"></tbody>
-  </table>
+  <div class="card">
 
+    <h1>รายการออเดอร์</h1>
+
+    <div class="toolbar">
+      <div class="filters">
+        <select id="filterPayment">
+          <option value="">การชำระเงินทั้งหมด</option>
+          <option value="จ่ายแล้ว">จ่ายแล้ว</option>
+          <option value="จ่ายผ่านแอพ">จ่ายผ่านแอพ</option>
+          <option value="COD">COD</option>
+          <option value="VATชำระแล้ว">VATชำระแล้ว</option>
+          <option value="VATรอชำระ">VATรอชำระ</option>
+        </select>
+
+        <select id="filterStatus">
+          <option value="">สถานะผลิตทั้งหมด</option>
+          <option>ตัด</option>
+          <option>ประกบ</option>
+          <option>กุ๊น</option>
+          <option>QC</option>
+          <option>ส่งออก</option>
+          <option>ยกเลิก</option>
+        </select>
+
+        <input type="date" id="filterDate">
+      </div>
+
+      <div class="actions-top">
+        <button class="btn btn-edit" onclick="editSelected()">✏️ แก้ไข</button>
+        <button class="btn btn-print" onclick="printSelected()">🖨 พิมพ์</button>
+        <button class="btn btn-delete" id="deleteBtn" onclick="deleteSelected()">🗑 ลบ</button>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th class="checkbox">
+            <input type="checkbox" id="checkAll">
+          </th>
+          <th>วันที่</th>
+          <th>ออเดอร์</th>
+          <th>รุ่นรถ</th>
+          <th>สีพรม</th>
+          <th>ประเภทพรม</th>
+          <th>ช่องทาง</th>
+          <th>การชำระเงิน</th>
+          <th>สถานะ</th>
+        </tr>
+      </thead>
+      <tbody id="orderBody">
+        <tr><td colspan="9">กำลังโหลด...</td></tr>
+      </tbody>
+    </table>
+
+  </div>
 </div>
 
 <script>
-let orders = [];
+let allOrders = [];
+let currentUserRole = '';
 
-async function loadOrders() {
-  const res = await fetch('/api/orders');
-  orders = await res.json();
-  render();
+async function authFetch(url, options = {}) {
+  options.headers = { 'Content-Type': 'application/json' };
+  const res = await fetch(url, options);
+  if (res.status === 401) location.href = '/login.html';
+  return res;
 }
 
-function render() {
+function logout() {
+  localStorage.clear();
+  location.href = '/login.html';
+}
+
+function formatDate(d) {
+  if (!d) return '-';
+  return new Date(d).toLocaleDateString('th-TH');
+}
+
+function renderPaymentBadge(s) {
+  return {
+    'จ่ายแล้ว': '<span class="badge badge-paid">จ่ายแล้ว</span>',
+    'จ่ายผ่านแอพ': '<span class="badge badge-app">ผ่านแอพ</span>',
+    'COD': '<span class="badge badge-cod">COD</span>',
+    'VATชำระแล้ว': '<span class="badge badge-vat-paid">VAT ✓</span>',
+    'VATรอชำระ': '<span class="badge badge-vat-pending">VAT รอ</span>'
+  }[s] || '-';
+}
+
+/* ===== LOAD USER ===== */
+async function loadMe() {
+  const res = await authFetch('/api/me');
+  const me = await res.json();
+  currentUserRole = me.role;
+
+  if (currentUserRole !== 'admin') {
+    document.getElementById('deleteBtn').style.display = 'none';
+  }
+}
+
+/* ===== LOAD ORDERS ===== */
+async function loadOrders() {
+  const res = await authFetch('/api/orders');
+  allOrders = await res.json();
+  applyFilter();
+}
+
+/* ===== FILTER ===== */
+function applyFilter() {
+  checkAll.checked = false;
+
+  const pay = filterPayment.value;
+  const status = filterStatus.value;
+  const date = filterDate.value;
+
+  const list = allOrders.filter(o => {
+    if (pay && o.payment_status !== pay) return false;
+    if (status && o.status !== status) return false;
+    if (date && o.created_at?.slice(0,10) !== date) return false;
+    return true;
+  });
+
+  renderTable(list);
+}
+
+function renderTable(list) {
   const body = document.getElementById('orderBody');
   body.innerHTML = '';
 
-  const d = filterDate.value;
-  const s = filterStatus.value;
+  if (!list.length) {
+    body.innerHTML = '<tr><td colspan="9">ไม่พบข้อมูล</td></tr>';
+    return;
+  }
 
-  orders
-    .filter(o => !d || o.order_date === d)
-    .filter(o => !s || o.status === s)
-    .forEach(o => {
-      const tr = document.createElement('tr');
-      tr.onclick = e => {
-        if (e.target.type !== 'checkbox' && e.target.tagName !== 'BUTTON') {
-          location.href = `order-detail.html?id=${o.id}`;
-        }
-      };
-
-      tr.innerHTML = `
-        <td><input type="checkbox" class="chk" value="${o.id}"></td>
-        <td>${o.car_model}</td>
-        <td>${o.mat_color}</td>
-        <td>${o.channel}</td>
-        <td>${o.customer}</td>
-        <td class="status">${o.status}</td>
-        <td class="actions">
-          <button onclick="event.stopPropagation()">✏️</button>
-          <button onclick="event.stopPropagation()">🗑</button>
+  list.forEach(o => {
+    body.innerHTML += `
+      <tr>
+        <td class="checkbox">
+          <input type="checkbox" class="row-check" value="${o.id}">
         </td>
-      `;
-      body.appendChild(tr);
-    });
+        <td>${formatDate(o.created_at)}</td>
+        <td>
+          <span class="order-link" onclick="view(${o.id})">#${o.id}</span>
+        </td>
+        <td>${o.car_model || ''}</td>
+        <td>${o.mat_color || ''}</td>
+        <td>${o.mat_type || ''}</td>
+        <td>${o.channel || ''}</td>
+        <td>${renderPaymentBadge(o.payment_status)}</td>
+        <td><strong>${o.status}</strong></td>
+      </tr>
+    `;
+  });
 }
 
-function toggleAll(el) {
-  document.querySelectorAll('.chk')
-    .forEach(c => c.checked = el.checked);
+function view(id) {
+  location.href = '/order-detail.html?id=' + id;
+}
+
+function getSelectedIds() {
+  return [...document.querySelectorAll('.row-check:checked')].map(c => c.value);
 }
 
 function printSelected() {
-  const ids = [...document.querySelectorAll('.chk:checked')]
-    .map(c => c.value);
-  if (!ids.length) {
-    alert('เลือกออเดอร์ก่อน');
-    return;
-  }
-  location.href = '/print.html?ids=' + ids.join(',');
+  const ids = getSelectedIds();
+  if (!ids.length) return alert('เลือกออเดอร์ก่อน');
+  window.open('/print.html?ids=' + ids.join(','));
 }
 
+function editSelected() {
+  const ids = getSelectedIds();
+  if (ids.length !== 1) return alert('เลือก 1 รายการ');
+  location.href = '/edit-order.html?id=' + ids[0];
+}
+
+async function deleteSelected() {
+  if (currentUserRole !== 'admin') return;
+
+  const ids = getSelectedIds();
+  if (!ids.length) return alert('เลือกออเดอร์ก่อน');
+  if (!confirm('ยืนยันลบออเดอร์?')) return;
+
+  const res = await authFetch('/api/orders', {
+    method: 'DELETE',
+    body: JSON.stringify({ ids })
+  });
+
+  if (res.ok) loadOrders();
+  else alert('ลบไม่สำเร็จ');
+}
+
+/* ===== EVENTS ===== */
+filterPayment.onchange = applyFilter;
+filterStatus.onchange = applyFilter;
+filterDate.onchange = applyFilter;
+
+checkAll.onchange = e => {
+  document.querySelectorAll('.row-check')
+    .forEach(c => c.checked = e.target.checked);
+};
+
+/* INIT */
+loadMe();
 loadOrders();
 </script>
 

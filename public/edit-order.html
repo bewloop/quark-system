@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Edit Order | QUARK</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+}
+
+.top-actions {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+}
+
+.top-actions button {
+  margin-left: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: #000;
+  color: #fff;
+  font-size: 12px;
+}
+
+.container {
+  max-width: 520px;
+  margin: 90px auto;
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+}
+
+h2 {
+  margin-top: 0;
+  text-align: center;
+}
+
+label {
+  font-size: 13px;
+  margin-top: 14px;
+  display: block;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+input[disabled] {
+  background: #eee;
+}
+
+button.submit-btn {
+  margin-top: 28px;
+  width: 100%;
+  padding: 12px;
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="top-actions">
+  <button onclick="history.back()">Back</button>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<div class="container">
+<h2>Edit Order</h2>
+
+<form id="orderForm">
+
+  <label>Order ID</label>
+  <input id="order_id" disabled>
+
+  <label>วันที่สั่งงาน</label>
+  <input type="date" id="order_date" required>
+
+  <label>ช่องทางขาย</label>
+  <select id="channel">
+    <option>LAZM</option>
+    <option>LAZFL</option>
+    <option>Shopee Q1</option>
+    <option>Shopee Q3</option>
+    <option>Shopee Q4</option>
+    <option>Line Q1</option>
+    <option>Line Q3</option>
+    <option>Facebook</option>
+    <option>Tiktok Q1</option>
+    <option>Tiktok Q3</option>
+    <option>หน้าร้าน</option>
+  </select>
+
+  <label>ชื่อลูกค้า</label>
+  <input id="customer">
+
+  <label>รุ่นรถ</label>
+  <input id="car_model">
+
+  <label>ปีรถ</label>
+  <input id="car_year">
+
+  <label>สีพรม</label>
+  <input id="mat_color">
+
+  <label>ประเภทพรม</label>
+  <select id="mat_type">
+    <option value="พรม6D">พรม 6D</option>
+    <option value="พรมกระดุม">พรมกระดุม</option>
+    <option value="พรมVIP">พรม VIP</option>
+    <option value="พรมดักฝุ่น">พรมดักฝุ่น</option>
+  </select>
+
+  <label>จำนวน</label>
+  <input type="number" id="mat_qty" min="1">
+
+  <label>การชำระเงิน</label>
+  <select id="payment_status">
+    <option value="จ่ายแล้ว">จ่ายแล้ว</option>
+    <option value="จ่ายผ่านแอพ">จ่ายผ่านแอพ</option>
+    <option value="COD">COD</option>
+    <option value="VATชำระแล้ว">VAT ชำระแล้ว</option>
+    <option value="VATรอชำระ">VAT รอชำระ</option>
+  </select>
+
+  <label>หมายเหตุ</label>
+  <textarea id="note"></textarea>
+
+  <button class="submit-btn" type="submit">💾 บันทึกการแก้ไข</button>
+</form>
+</div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const orderId = params.get('id');
+
+if (!orderId) {
+  alert('ไม่พบ Order ID');
+  history.back();
+}
+
+/* LOAD ORDER */
+(async () => {
+  const res = await fetch(`/api/orders/${orderId}`, {
+    credentials: 'include' // ⭐ สำคัญมาก
+  });
+
+  if (!res.ok) {
+    alert('โหลดข้อมูลไม่สำเร็จ');
+    return history.back();
+  }
+
+  const o = await res.json();
+
+  order_id.value = o.id;
+  order_date.value = o.order_date?.substring(0,10) || '';
+  channel.value = o.channel || '';
+  customer.value = o.customer || '';
+  car_model.value = o.car_model || '';
+  car_year.value = o.car_year || '';
+  mat_color.value = o.mat_color || '';
+  mat_type.value = o.mat_type || '';
+  mat_qty.value = o.mat_qty || 1;
+  payment_status.value = o.payment_status || '';
+  note.value = o.note || '';
+})();
+
+/* SAVE */
+document.getElementById('orderForm').onsubmit = async (e) => {
+  e.preventDefault();
+
+  const payload = {
+    order_date: order_date.value,
+    channel: channel.value,
+    customer: customer.value.trim(),
+    car_model: car_model.value.trim(),
+    car_year: car_year.value.trim(),
+    mat_color: mat_color.value.trim(),
+    mat_type: mat_type.value,
+    mat_qty: Number(mat_qty.value) || 1,
+    payment_status: payment_status.value,
+    note: note.value.trim()
+  };
+
+  const res = await fetch(`/api/orders/${orderId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload)
+  });
+
+  if (!res.ok) {
+    alert('บันทึกไม่สำเร็จ');
+    return;
+  }
+
+  alert('บันทึกเรียบร้อย');
+  location.href = `order-detail.html?id=${orderId}`;
+};
+
+/* LOGOUT */
+async function logout() {
+  await fetch('/api/logout', {
+    method: 'POST',
+    credentials: 'include'
+  });
+  location.href = 'login.html';
+}
+</script>
+
+</body>
+</html>

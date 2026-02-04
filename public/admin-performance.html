@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Performance | QUARK</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+}
+
+.top-actions {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.top-actions button {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  background: #000;
+  color: #fff;
+  cursor: pointer;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 90px auto 40px;
+  background: #fff;
+  padding: 28px;
+  border-radius: 12px;
+}
+
+h2 {
+  margin-top: 0;
+  text-align: center;
+}
+
+.filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filters input,
+.filters button {
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.filters button {
+  background: #111;
+  color: #fff;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th, td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+}
+
+th {
+  background: #000;
+  color: #fff;
+}
+
+.summary {
+  margin-top: 20px;
+  font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="top-actions">
+  <button onclick="location.href='index.html'">← กลับหน้าแรก</button>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<div class="container">
+
+  <h2>📊 Performance Staff</h2>
+
+  <div class="filters">
+    <label>จากวันที่:
+      <input type="date" id="from">
+    </label>
+
+    <label>ถึงวันที่:
+      <input type="date" id="to">
+    </label>
+
+    <button onclick="loadPerformance()">โหลดข้อมูล</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>พนักงาน</th>
+        <th>ตัด</th>
+        <th>ประกบ</th>
+        <th>กุ๊น</th>
+        <th>QC</th>
+        <th>ค่าแรง (บาท)</th>
+      </tr>
+    </thead>
+    <tbody id="rows">
+      <tr><td colspan="6">เลือกช่วงวันที่</td></tr>
+    </tbody>
+  </table>
+
+  <div class="summary" id="summary"></div>
+
+</div>
+
+<script>
+/* ===== ค่าแรงต่อขั้น ===== */
+const RATE = {
+  cut: 20,
+  assemble: 25,
+  sew: 30,
+  qc: 15
+};
+
+async function authFetch(url) {
+  const res = await fetch(url, { credentials: 'include' });
+  if (res.status === 401 || res.status === 403) {
+    location.href = 'login.html';
+  }
+  return res;
+}
+
+async function loadPerformance() {
+  const from = document.getElementById('from').value;
+  const to = document.getElementById('to').value;
+  const tbody = document.getElementById('rows');
+  const summary = document.getElementById('summary');
+
+  if (!from || !to) {
+    alert('เลือกช่วงวันที่');
+    return;
+  }
+
+  tbody.innerHTML = `<tr><td colspan="6">กำลังโหลด...</td></tr>`;
+  summary.innerHTML = '';
+
+  const res = await authFetch(`/api/admin/performance?from=${from}&to=${to}`);
+  const data = await res.json();
+
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="6">ไม่พบข้อมูล</td></tr>`;
+    return;
+  }
+
+  let total = 0;
+  tbody.innerHTML = '';
+
+  data.forEach(s => {
+    const wage =
+      (s.cut || 0) * RATE.cut +
+      (s.assemble || 0) * RATE.assemble +
+      (s.sew || 0) * RATE.sew +
+      (s.qc || 0) * RATE.qc;
+
+    total += wage;
+
+    tbody.innerHTML += `
+      <tr>
+        <td><strong>${s.staff}</strong></td>
+        <td>${s.cut || 0}</td>
+        <td>${s.assemble || 0}</td>
+        <td>${s.sew || 0}</td>
+        <td>${s.qc || 0}</td>
+        <td>${wage.toLocaleString()}</td>
+      </tr>
+    `;
+  });
+
+  summary.innerHTML =
+    `💰 ค่าแรงรวมทั้งหมด: <strong>${total.toLocaleString()} บาท</strong>`;
+}
+
+async function logout() {
+  await fetch('/api/logout', { method: 'POST' });
+  location.href = 'login.html';
+}
+
+/* ตั้งค่าวันวันนี้อัตโนมัติ */
+const today = new Date().toISOString().slice(0,10);
+from.value = today;
+to.value = today;
+</script>
+
+</body>
+</html>

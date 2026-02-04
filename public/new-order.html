@@ -1,193 +1,218 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8" />
-<title>New Order | QUARK</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <title>New Order | QUARK</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f5f5f5;
-}
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+    }
 
-header {
-  background: #111;
-  color: #fff;
-  padding: 16px 20px;
-  font-size: 18px;
-}
+    .top-actions {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+    }
 
-.container {
-  max-width: 700px;
-  margin: 20px auto;
-  background: #fff;
-  padding: 24px;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
+    .top-actions button {
+      margin-left: 8px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background: #000;
+      color: #fff;
+      font-size: 12px;
+    }
 
-h2 {
-  margin-top: 0;
-}
+    .container {
+      max-width: 520px;
+      margin: 90px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+    }
 
-.form-group {
-  margin-bottom: 14px;
-}
+    .logo-img {
+      max-width: 140px;
+      margin: 0 auto 20px;
+      display: block;
+    }
 
-label {
-  display: block;
-  font-size: 14px;
-  margin-bottom: 6px;
-}
+    h2 {
+      margin-top: 0;
+      text-align: center;
+    }
 
-input, select, textarea {
-  width: 100%;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-}
+    label {
+      font-size: 13px;
+      margin-top: 14px;
+      display: block;
+    }
 
-textarea {
-  resize: vertical;
-}
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
 
-.row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.actions {
-  margin-top: 20px;
-  display: flex;
-  gap: 10px;
-}
-
-button {
-  padding: 12px 18px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.save {
-  background: #111;
-  color: #fff;
-}
-
-.cancel {
-  background: #ddd;
-}
-</style>
+    button.submit-btn {
+      margin-top: 28px;
+      width: 100%;
+      padding: 12px;
+      background: #000;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 
 <body>
 
-<header>
-  ➕ New Order
-</header>
-
-<div class="container">
-  <h2>สร้างคำสั่งซื้อใหม่</h2>
-
-  <div class="form-group">
-    <label>วันที่</label>
-    <input type="date" id="order_date" disabled>
+  <div class="top-actions">
+    <button onclick="location.href='index.html'">กลับหน้าแรก</button>
+    <button onclick="logout()">Logout</button>
   </div>
 
-  <div class="form-group">
-    <label>รุ่นรถ</label>
-    <input id="car_model" placeholder="เช่น Toyota Camry">
-  </div>
+  <img src="images/logo.png" class="logo-img" alt="QUARK Logo">
 
-  <div class="row">
-    <div class="form-group">
-      <label>ปีรถ</label>
-      <input id="car_year" placeholder="2023">
-    </div>
+  <div class="container">
+    <h2>New Order</h2>
 
-    <div class="form-group">
-      <label>ประเภทพรม</label>
-      <select id="mat_type">
-        <option value="">-- เลือก --</option>
-        <option>พรม 6D</option>
-        <option>พรมกระดุม</option>
-        <option>พรมดักฝุ่น</option>
+    <form id="orderForm">
+
+      <label>วันที่สั่งงาน</label>
+      <input type="date" name="order_date" required>
+
+      <label>ช่องทางขาย</label>
+      <select name="channel">
+        <option>LAZM</option>
+        <option>LAZFL</option>
+        <option>Shopee Q1</option>
+        <option>Shopee Q3</option>
+        <option>Shopee Q4</option>
+        <option>Line Q1</option>
+        <option>Line Q3</option>
+        <option>Facebook</option>
+        <option>Tiktok Q1</option>
+        <option>Tiktok Q3</option>
+        <option>หน้าร้าน</option>
       </select>
-    </div>
-  </div>
 
-  <div class="row">
-    <div class="form-group">
+      <label>ชื่อลูกค้า</label>
+      <input name="customer">
+
+      <label>รุ่นรถ</label>
+      <input name="car_model">
+
+      <label>ปีรถ</label>
+      <input name="car_year">
+
       <label>สีพรม</label>
-      <input id="mat_color">
-    </div>
+      <input name="mat_color">
 
-    <div class="form-group">
-      <label>จำนวนชิ้นพรม</label>
-      <input id="mat_qty" type="number" min="1">
-    </div>
+      <label>ประเภทพรม</label>
+      <select name="mat_type">
+        <option value="พรม6D">พรม 6D</option>
+        <option value="พรมกระดุม">พรมกระดุม</option>
+        <option value="พรมVIP">พรม VIP</option>
+        <option value="พรมดักฝุ่น">พรมดักฝุ่น</option>
+      </select>
+
+      <label>จำนวน</label>
+      <input type="number" name="mat_qty" value="1" min="1">
+
+      <label>การชำระเงิน</label>
+      <select name="payment_status">
+        <option value="จ่ายแล้ว">จ่ายแล้ว</option>
+        <option value="จ่ายผ่านแอพ">จ่ายผ่านแอพ</option>
+        <option value="COD">COD</option>
+        <option value="VATชำระแล้ว">VAT ชำระแล้ว</option>
+        <option value="VATรอชำระ">VAT รอชำระ</option>
+      </select>
+
+      <label>หมายเหตุ</label>
+      <textarea name="note"></textarea>
+
+      <button class="submit-btn" type="submit">
+        ➕ บันทึกออเดอร์
+      </button>
+
+    </form>
   </div>
 
-  <div class="form-group">
-    <label>ช่องทางสั่งซื้อ</label>
-    <input id="channel" placeholder="Shopee / Line / Walk-in">
-  </div>
+  <script>
+    /* 🔐 CHECK LOGIN */
+    (async () => {
+      const res = await fetch('/api/me', { credentials: 'include' });
+      if (!res.ok) {
+        location.href = 'login.html';
+      }
+    })();
 
-  <div class="form-group">
-    <label>ชื่อลูกค้า</label>
-    <input id="customer">
-  </div>
+    /* 🚪 LOGOUT */
+    async function logout() {
+      await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      location.href = 'login.html';
+    }
 
-  <div class="form-group">
-    <label>หมายเหตุ</label>
-    <textarea id="note" rows="3"></textarea>
-  </div>
+    /* 📝 SUBMIT ORDER */
+    document.getElementById('orderForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
 
-  <div class="actions">
-    <button class="save" onclick="saveOrder()">บันทึกออเดอร์</button>
-    <button class="cancel" onclick="location.href='index.html'">ยกเลิก</button>
-  </div>
-</div>
+      const f = this;
 
-<script>
-document.getElementById('order_date').value =
-  new Date().toISOString().slice(0,10);
+      const payload = {
+        order_date: f.order_date.value,
+        channel: f.channel.value,
+        customer: f.customer.value.trim(),
+        car_model: f.car_model.value.trim(),
+        car_year: f.car_year.value.trim(),
+        mat_color: f.mat_color.value.trim(),
+        mat_type: f.mat_type.value,
+        mat_qty: Number(f.mat_qty.value) || 1,
+        payment_status: f.payment_status.value,
+        note: f.note.value.trim()
+      };
 
-async function saveOrder() {
-  const data = {
-    car_model: car_model.value.trim(),
-    car_year: car_year.value.trim(),
-    mat_type: mat_type.value,
-    mat_color: mat_color.value.trim(),
-    mat_qty: mat_qty.value,
-    channel: channel.value.trim(),
-    customer: customer.value.trim(),
-    note: note.value.trim()
-  };
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(payload)
+        });
 
-  if (!data.car_model || !data.mat_type || !data.mat_qty) {
-    alert('กรุณากรอกข้อมูลที่จำเป็น');
-    return;
-  }
+        const data = await res.json();
 
-  const res = await fetch('/api/orders', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
+        if (!res.ok) {
+          alert('บันทึกไม่สำเร็จ');
+          return;
+        }
 
-  if (res.ok) {
-    location.href = 'order.html';
-  } else {
-    alert('บันทึกไม่สำเร็จ');
-  }
-}
-</script>
+        alert('บันทึกออเดอร์สำเร็จ');
+        location.href = `order.html?id=${data.id}`;
+
+      } catch (err) {
+        console.error(err);
+        alert('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้');
+      }
+    });
+  </script>
 
 </body>
 </html>

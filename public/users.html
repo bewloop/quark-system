@@ -6,66 +6,167 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+* { box-sizing: border-box; }
+
 body {
+  margin: 0;
   font-family: Arial, sans-serif;
   background: #f5f5f5;
-  padding: 20px;
 }
-h1 { margin-bottom: 10px; }
+
+/* ===== HEADER ===== */
+header {
+  background: #000;
+  color: #fff;
+  padding: 14px 20px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* ===== LAYOUT ===== */
+.container {
+  max-width: 1000px;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+
+/* ===== ADD USER ===== */
+.new-user {
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.new-user h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.new-user .row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.new-user input,
+.new-user select {
+  padding: 8px;
+  font-size: 13px;
+  width: 160px;
+}
+
+.new-user button {
+  padding: 8px 14px;
+  font-size: 13px;
+  border: 1px solid #000;
+  background: #000;
+  color: #fff;
+  cursor: pointer;
+}
+
+.new-user button:hover {
+  opacity: 0.85;
+}
+
+/* ===== TABLE ===== */
+.table-wrap {
+  background: #fff;
+  border: 1px solid #ddd;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
+  font-size: 13px;
 }
-th, td {
-  padding: 8px;
-  border-bottom: 1px solid #ddd;
+
+thead th {
+  background: #000;
+  color: #fff;
+  padding: 10px;
   text-align: left;
 }
-input, select, button {
-  padding: 5px;
+
+tbody td {
+  border-bottom: 1px solid #eee;
+  padding: 10px;
+  vertical-align: middle;
 }
-button {
+
+td select,
+td input {
+  font-size: 12px;
+  padding: 6px;
+}
+
+.action-btn {
+  padding: 5px 12px;
+  font-size: 12px;
+  border: 1px solid #000;
+  background: #fff;
   cursor: pointer;
 }
-.new-user {
-  margin-bottom: 20px;
-  background: #fff;
-  padding: 10px;
+
+.action-btn:hover {
+  background: #000;
+  color: #fff;
 }
 </style>
 </head>
 
 <body>
-<h1>จัดการผู้ใช้งาน</h1>
 
-<div class="new-user">
-  <h3>เพิ่มผู้ใช้</h3>
-  <input id="nu" placeholder="username">
-  <input id="np" placeholder="password">
-  <select id="nr">
-    <option value="admin">admin</option>
-    <option value="quarkmgr">quarkmgr</option>
-  </select>
-  <button onclick="createUser()">เพิ่ม</button>
+<header>QUARK – จัดการผู้ใช้งาน</header>
+
+<div class="container">
+
+  <!-- ADD USER -->
+  <div class="new-user">
+    <h3>➕ เพิ่มผู้ใช้ใหม่</h3>
+    <div class="row">
+      <input id="nu" placeholder="username">
+      <input id="np" type="password" placeholder="password">
+      <select id="nr">
+        <option value="admin">admin</option>
+        <option value="quarkmgr">quarkmgr</option>
+        <option value="staff">staff</option>
+      </select>
+      <button onclick="createUser()">เพิ่มผู้ใช้</button>
+    </div>
+  </div>
+
+  <!-- USER TABLE -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Username</th>
+          <th>Role</th>
+          <th>เปลี่ยนรหัสผ่าน</th>
+          <th>จัดการ</th>
+        </tr>
+      </thead>
+      <tbody id="list">
+        <tr><td colspan="5">กำลังโหลด...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
 </div>
 
-<table>
-<thead>
-<tr>
-  <th>ID</th>
-  <th>Username</th>
-  <th>Role</th>
-  <th>Password ใหม่</th>
-  <th>Action</th>
-</tr>
-</thead>
-<tbody id="list"></tbody>
-</table>
-
 <script>
+async function authFetch(url, options = {}) {
+  options.headers = { 'Content-Type': 'application/json' };
+  options.credentials = 'include';
+  const res = await fetch(url, options);
+  if (res.status === 401) location.href = '/login.html';
+  return res;
+}
+
 async function loadUsers() {
-  const res = await fetch('/api/users');
+  const res = await authFetch('/api/users');
   if (!res.ok) {
     alert('ไม่มีสิทธิ์');
     location.href = '/login.html';
@@ -80,11 +181,12 @@ async function loadUsers() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${u.id}</td>
-      <td>${u.username}</td>
+      <td><strong>${u.username}</strong></td>
       <td>
         <select onchange="changeRole(${u.id}, this.value)">
           <option value="admin" ${u.role==='admin'?'selected':''}>admin</option>
           <option value="quarkmgr" ${u.role==='quarkmgr'?'selected':''}>quarkmgr</option>
+          <option value="staff" ${u.role==='staff'?'selected':''}>staff</option>
         </select>
       </td>
       <td>
@@ -92,11 +194,15 @@ async function loadUsers() {
           onkeydown="if(event.key==='Enter') changePassword(${u.id}, this.value)">
       </td>
       <td>
-        <button onclick="deleteUser(${u.id})">ลบ</button>
+        <button class="action-btn" onclick="deleteUser(${u.id})">ลบ</button>
       </td>
     `;
     tbody.appendChild(tr);
   });
+
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="5">ไม่มีผู้ใช้งาน</td></tr>';
+  }
 }
 
 async function createUser() {
@@ -105,46 +211,44 @@ async function createUser() {
   const role = nr.value;
 
   if (!username || !password) {
-    alert('กรอกให้ครบ');
+    alert('กรอกข้อมูลให้ครบ');
     return;
   }
 
-  const res = await fetch('/api/users', {
+  const res = await authFetch('/api/users', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password, role })
   });
 
   if (!res.ok) {
-    alert('เพิ่มไม่สำเร็จ');
+    alert('เพิ่มผู้ใช้ไม่สำเร็จ');
     return;
   }
 
-  nu.value = np.value = '';
+  nu.value = '';
+  np.value = '';
   loadUsers();
 }
 
 async function changePassword(id, password) {
   if (!password) return;
-  await fetch('/api/users/' + id, {
+  await authFetch('/api/users/' + id, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ password })
   });
-  alert('เปลี่ยนรหัสแล้ว');
+  alert('เปลี่ยนรหัสผ่านแล้ว');
 }
 
 async function changeRole(id, role) {
-  await fetch('/api/users/' + id, {
+  await authFetch('/api/users/' + id, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ role })
   });
 }
 
 async function deleteUser(id) {
   if (!confirm('ลบผู้ใช้นี้?')) return;
-  const res = await fetch('/api/users/' + id, { method: 'DELETE' });
+  const res = await authFetch('/api/users/' + id, { method: 'DELETE' });
   if (!res.ok) {
     alert('ลบไม่ได้');
     return;
@@ -152,7 +256,9 @@ async function deleteUser(id) {
   loadUsers();
 }
 
+/* INIT */
 loadUsers();
 </script>
+
 </body>
 </html>

@@ -8,6 +8,8 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
 <style>
+* { box-sizing: border-box; }
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
@@ -15,27 +17,30 @@ body {
 }
 
 header {
-  background: #111;
-  color: #fff;
-  padding: 16px 20px;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  padding: 14px 20px;
   font-size: 18px;
+  font-weight: bold;
 }
 
 .container {
-  max-width: 600px;
-  margin: auto;
-  padding: 20px;
+  max-width: 700px;
+  margin: 20px auto;
+  padding: 0 20px;
 }
 
 .card {
   background: #fff;
-  padding: 16px;
-  margin-bottom: 16px;
-  border-radius: 6px;
+  border: 1px solid #ddd;
+  padding: 20px;
+  margin-bottom: 20px;
 }
 
 .row {
-  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
   font-size: 14px;
 }
 
@@ -43,102 +48,153 @@ header {
   color: #666;
 }
 
-select, button {
-  width: 100%;
-  padding: 10px;
+.value {
+  font-weight: bold;
+}
+
+.status {
+  font-size: 16px;
+}
+
+.status-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
   margin-top: 10px;
-  font-size: 14px;
 }
 
 button {
+  padding: 8px 14px;
+  font-size: 13px;
+  border: 1px solid #aaa;
+  background: #fff;
   cursor: pointer;
 }
 
-.actions {
-  display: flex;
-  gap: 10px;
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+button:hover:not(:disabled) {
+  background: #eee;
 }
 
 #qrcode {
   margin-top: 10px;
-  text-align: center;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  📄 Order Detail
-</header>
+<header>QUARK – รายละเอียดออเดอร์</header>
 
 <div class="container">
 
-  <div class="card">
-    <div class="row"><span class="label">ลูกค้า:</span> <span id="customer"></span></div>
-    <div class="row"><span class="label">รุ่นรถ:</span> <span id="car"></span></div>
-    <div class="row"><span class="label">สีพรม:</span> <span id="color"></span></div>
-    <div class="row"><span class="label">ช่องทาง:</span> <span id="channel"></span></div>
+  <!-- ORDER INFO -->
+  <div class="card" id="orderInfo">
+    กำลังโหลดข้อมูล...
   </div>
 
+  <!-- STATUS -->
   <div class="card">
-    <div class="label">สถานะการผลิต</div>
-    <select id="status">
-      <option>ตัด</option>
-      <option>ประกบ</option>
-      <option>กุ๊น</option>
-      <option>QC</option>
-      <option>ส่งออก</option>
-      <option>ยกเลิก</option>
-    </select>
-    <button onclick="saveStatus()">💾 บันทึกสถานะ</button>
+    <div class="row">
+      <div class="label">สถานะปัจจุบัน</div>
+      <div class="value status" id="currentStatus">-</div>
+    </div>
+
+    <div class="status-buttons" id="statusButtons"></div>
   </div>
 
+  <!-- QR -->
   <div class="card">
-    <div class="label">QR สำหรับออเดอร์นี้</div>
+    <div class="label">QR CODE สำหรับใบงาน</div>
     <div id="qrcode"></div>
-  </div>
-
-  <div class="actions">
-    <button onclick="history.back()">⬅ กลับ</button>
-    <button onclick="printOrder()">🖨 พิมพ์</button>
   </div>
 
 </div>
 
 <script>
+const STATUS_FLOW = ['ตัด','ประกบ','กุ๊น','QC','ส่งออก','ยกเลิก'];
 const id = new URLSearchParams(location.search).get('id');
 
+async function authFetch(url, options = {}) {
+  options.headers = { 'Content-Type': 'application/json' };
+  const res = await fetch(url, options);
+  if (res.status === 401) location.href = '/login.html';
+  return res;
+}
+
 async function loadOrder() {
-  const res = await fetch('/api/orders/' + id);
+  const res = await authFetch('/api/orders/' + id);
   const o = await res.json();
 
-  customer.textContent = o.customer;
-  car.textContent = o.car_model;
-  color.textContent = o.mat_color;
-  channel.textContent = o.channel;
-  status.value = o.status;
+  document.getElementById('orderInfo').innerHTML = `
+    <div class="row"><div class="label">Order #</div><div class="value">${o.id}</div></div>
+    <div class="row"><div class="label">รุ่นรถ</div><div class="value">${o.car_model || ''}</div></div>
+    <div class="row"><div class="label">ปีรถ</div><div class="value">${o.car_year || ''}</div></div>
+    <div class="row"><div class="label">ประเภทพรม</div><div class="value">${o.mat_type || ''}</div></div>
+    <div class="row"><div class="label">สีพรม</div><div class="value">${o.mat_color || ''}</div></div>
+    <div class="row"><div class="label">จำนวน</div><div class="value">${o.mat_qty || ''}</div></div>
+    <div class="row"><div class="label">ลูกค้า</div><div class="value">${o.customer || ''}</div></div>
+    <div class="row"><div class="label">หมายเหตุ</div><div class="value">${o.note || '-'}</div></div>
+  `;
 
-  new QRCode(document.getElementById("qrcode"), {
-    text: location.href,
+  document.getElementById('currentStatus').innerText = o.status;
+
+  renderStatusButtons(o.status);
+  renderQR(o.id);
+}
+
+function renderStatusButtons(current) {
+  const wrap = document.getElementById('statusButtons');
+  wrap.innerHTML = '';
+
+  const currentIndex = STATUS_FLOW.indexOf(current);
+
+  STATUS_FLOW.forEach((s, i) => {
+    const btn = document.createElement('button');
+    btn.innerText = s;
+
+    if (s === current) {
+      btn.disabled = true;
+    } else if (s === 'ยกเลิก') {
+      btn.disabled = false;
+    } else {
+      btn.disabled = i !== currentIndex + 1;
+    }
+
+    btn.onclick = () => updateStatus(s);
+    wrap.appendChild(btn);
+  });
+}
+
+async function updateStatus(status) {
+  if (!confirm('เปลี่ยนสถานะเป็น "' + status + '" ?')) return;
+
+  const res = await authFetch('/api/orders/' + id + '/status', {
+    method: 'PUT',
+    body: JSON.stringify({ status })
+  });
+
+  if (res.ok) {
+    loadOrder();
+  } else {
+    alert('เปลี่ยนสถานะไม่สำเร็จ');
+  }
+}
+
+function renderQR(orderId) {
+  document.getElementById('qrcode').innerHTML = '';
+  new QRCode(document.getElementById('qrcode'), {
+    text: location.origin + '/order-detail.html?id=' + orderId,
     width: 120,
     height: 120
   });
 }
 
-async function saveStatus() {
-  await fetch('/api/orders/' + id + '/status', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: status.value })
-  });
-  alert('บันทึกแล้ว');
-}
-
-function printOrder() {
-  location.href = '/print.html?ids=' + id;
-}
-
+/* INIT */
 loadOrder();
 </script>
 
