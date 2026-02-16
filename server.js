@@ -3,6 +3,9 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const { Pool } = require('pg');
 const path = require('path');
+const customerRoutes = require('./server/routes/customers');
+const invoiceRoutes = require('./server/routes/invoices');
+
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -24,6 +27,7 @@ async function initDB() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS orders (
@@ -67,6 +71,11 @@ async function initDB() {
     )
   `);
 
+   await pool.query(`
+  ALTER TABLE orders
+  ADD COLUMN IF NOT EXISTS set_type TEXT
+`);
+
   await pool.query(`
     INSERT INTO users (username, password, role)
     VALUES ('admin', 'admin123', 'admin')
@@ -83,6 +92,20 @@ app.set('trust proxy', 1);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use('/api/customers', customerRoutes);
+app.use('/api/invoices', invoiceRoutes);
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'quark-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: true,
+    httpOnly: true,
+    sameSite: 'none',
+    maxAge: 22 * 60 * 60 * 1000
+  }
+}));
 
 app.get('/', (req, res) => {
   if (!req.session.user) {
@@ -93,17 +116,6 @@ app.get('/', (req, res) => {
 
 app.use(express.static('public'));
 
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'quark-secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: true,
-    httpOnly: true,
-    sameSite: 'none',
-    maxAge: 1000 * 60 * 60 * 8
-  }
-}));
 
 /* ================= AUTH ================= */
 
@@ -187,7 +199,7 @@ app.post('/api/orders', auth(['admin', 'quarkmgr']), async (req, res) => {
 
   const orderNo = `QK-${year}${String(nextRun).padStart(4, '0')}`;
 
-  const r = await pool.query(`
+ const r = await pool.query(`
   INSERT INTO orders (
     order_no,
     order_date,
@@ -200,13 +212,15 @@ app.post('/api/orders', auth(['admin', 'quarkmgr']), async (req, res) => {
     customer,
     payment_status,
     note,
-    production_status
+    production_status,
+    set_type
   )
   VALUES (
     $1,
     CURRENT_DATE,
     $2,$3,$4,$5,$6,$7,$8,$9,$10,
-    'สั่งงาน'
+    'สั่งงาน',
+    $11
   )
   RETURNING id, order_no
 `, [
@@ -219,16 +233,42 @@ app.post('/api/orders', auth(['admin', 'quarkmgr']), async (req, res) => {
   o.channel,
   o.customer,
   o.payment_status,
-  o.note
+  o.note,
+  o.set_type   // 🔥 เพิ่มบรรทัดนี้
 ]);
 
   res.json({ ok: true, id: r.rows[0].id, order_no: r.rows[0].order_no });
 });
 
 app.get('/api/orders', auth(['admin', 'quarkmgr']), async (req, res) => {
-  const r = await pool.query('select * from orders order by id desc');
-  res.json(r.rows);
+  const page = parseInt(req.query.page) || 1;
+  const limit = 50;
+  const offset = (page - 1) * limit;
+
+  // จำนวนทั้งหมด
+  const countResult = await pool.query(
+    'SELECT COUNT(*) FROM orders'
+  );
+  const total = parseInt(countResult.rows[0].count);
+  const totalPages = Math.ceil(total / limit);
+
+  // ดึงเฉพาะหน้าที่ต้องการ
+  const result = await pool.query(
+    `
+    SELECT *
+    FROM orders
+    ORDER BY id DESC
+    LIMIT $1 OFFSET $2
+    `,
+    [limit, offset]
+  );
+
+  res.json({
+    orders: result.rows,
+    totalPages
+  });
 });
+
 
 app.get('/api/orders/:id', auth(), async (req, res) => {
   const r = await pool.query(
@@ -253,8 +293,9 @@ app.put('/api/orders/:id', auth(['admin','quarkmgr']), async (req, res) => {
     mat_type = $6,
     mat_qty = $7,
     payment_status = $8,
-    note = $9
-  WHERE id = $10
+    note = $9,
+    set_type = $10
+  WHERE id = $11
 `, [
   o.channel,
   o.customer,
@@ -265,6 +306,7 @@ app.put('/api/orders/:id', auth(['admin','quarkmgr']), async (req, res) => {
   o.mat_qty,
   o.payment_status,
   o.note,
+  o.set_type,
   req.params.id
 ]);
 
@@ -274,6 +316,39 @@ app.put('/api/orders/:id', auth(['admin','quarkmgr']), async (req, res) => {
     res.status(500).json({ error: 'update failed' });
   }
 });
+
+
+/* ================= DELETE ================= */
+
+
+app.delete('/api/orders', auth(['admin']), async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || !ids.length) {
+      return res.status(400).json({ error: 'no ids' });
+    }
+
+    const intIds = ids.map(Number);
+
+    // 🔥 ลบ log ก่อน
+    await pool.query(
+      'DELETE FROM order_status_log WHERE order_id = ANY($1::int[])',
+      [intIds]
+    );
+
+    // 🔥 ค่อยลบ order
+    await pool.query(
+      'DELETE FROM orders WHERE id = ANY($1::int[])',
+      [intIds]
+    );
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('DELETE ORDER ERROR:', err);
+    res.status(500).json({ error: 'delete failed' });
+  }
+});
+
 
 /* ================= STATUS ================= */
 
@@ -341,7 +416,7 @@ app.post('/api/stock', auth(['admin','quarkmgr']), async (req, res) => {
 
 /* ================= PERFORMANCE (ADMIN ONLY) ================= */
 
-app.get('/api/admin/performance', auth(['admin']), async (req, res) => {
+app.get('/api/admin/performance-summary', auth(['admin']), async (req, res) => {
   const { from, to } = req.query;
 
   if (!from || !to) {
@@ -360,6 +435,32 @@ app.get('/api/admin/performance', auth(['admin']), async (req, res) => {
     WHERE l.created_at::date BETWEEN $1 AND $2
     GROUP BY u.username
     ORDER BY u.username
+  `, [from, to]);
+
+  res.json(r.rows);
+});
+
+app.get('/api/admin/performance-detail', auth(['admin']), async (req, res) => {
+  const { from, to } = req.query;
+
+  if (!from || !to) {
+    return res.status(400).json({ error: 'missing date range' });
+  }
+
+  const r = await pool.query(`
+    SELECT
+      u.username,
+      o.id AS order_id,
+      o.order_no,
+      o.car_model,
+      o.car_year,
+      l.status,
+      l.created_at
+    FROM order_status_log l
+    JOIN users u ON u.id = l.user_id
+    JOIN orders o ON o.id = l.order_id
+    WHERE l.created_at::date BETWEEN $1 AND $2
+    ORDER BY l.created_at DESC
   `, [from, to]);
 
   res.json(r.rows);

@@ -101,13 +101,21 @@ footer {
   color: #999;
   text-align: center;
 }
+
+.logo-img {
+  width: 1000px;      /* ปรับตรงนี้ */
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto 20px;
+}
+
 </style>
 </head>
 
 <body>
 
 <div class="top-actions">
-  <button onclick="location.href='index.html'">Back</button>
   <button onclick="logout()">Logout</button>
 </div>
 
@@ -130,12 +138,25 @@ footer {
     <div class="menu-sub">รายการสั่งซื้อทั้งหมด</div>
   </div>
 
+   <!-- admin + quarkmgr -->
+  <div id="btn-invoice" class="menu-card" style="display:none">
+    <div class="menu-title">🧾 Invoice / Receipt</div>
+    <div class="menu-sub">ใบกำกับภาษี และใบเสร็จรับเงิน</div>
+  </div>
+
   <div id="btn-stock" class="menu-card" style="display:none">
     <div class="menu-title">📦 Stock</div>
     <div class="menu-sub">สินค้าคงคลัง</div>
   </div>
+  
 
   <!-- admin only -->
+  <div id="salaryBtn" class="menu-card" style="display:none">
+  <div class="menu-title">💰 เงินเดือนพนักงาน</div>
+  <div class="menu-sub">คำนวณและจัดการรอบจ่ายเงิน</div>
+</div>
+
+
   <div id="btn-performance" class="menu-card" style="display:none">
     <div class="menu-title">📊 Performance</div>
     <div class="menu-sub">ประสิทธิภาพพนักงาน</div>
@@ -151,12 +172,16 @@ footer {
   </footer>
 </div>
 
+
+
 <script>
 async function logout() {
   await fetch('/api/logout', {
-  method: 'POST',
-  credentials: 'include'
-});
+    method: 'POST',
+    credentials: 'include'
+  });
+
+  location.href = 'login.html';
 }
 
 (async () => {
@@ -170,9 +195,13 @@ async function logout() {
 
   const btnNew = document.getElementById('btn-new');
   const btnOrders = document.getElementById('btn-orders');
+  const btnInvoice = document.getElementById('btn-invoice');
   const btnStock = document.getElementById('btn-stock');
   const btnPerformance = document.getElementById('btn-performance');
   const btnUsers = document.getElementById('btn-users');
+  const salaryBtn = document.getElementById('salaryBtn');
+
+
 
   if (me.role === 'admin') {
     btnNew.style.display = 'block';
@@ -186,12 +215,21 @@ async function logout() {
   }
 
   if (me.role === 'admin' || me.role === 'quarkmgr') {
+    salaryBtn.style.display = 'block';
+    salaryBtn.onclick = () => location.href = 'salary.html';
+
     btnStock.style.display = 'block';
     btnStock.onclick = () => location.href = 'stock.html';
+
+    btnInvoice.style.display = 'block';
+    btnInvoice.onclick = () => location.href = 'invoice-index.html';
   }
 
   btnOrders.onclick = () => location.href = 'order.html';
 })();
+
+
+
 </script>
 
 </body>

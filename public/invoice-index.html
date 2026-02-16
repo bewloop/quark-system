@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Invoice / Receipt | QUARK</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f2f2f2;
+}
+
+.page {
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+/* ===== TOP BAR ===== */
+.top-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.top-bar button {
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 8px;
+  border: none;
+  background: #000;
+  color: #fff;
+  cursor: pointer;
+}
+
+.top-bar button:hover { opacity: .85; }
+
+/* ===== LOGO ===== */
+.logo-img {
+  width: 1000px;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto 20px;
+}
+
+/* ===== CARD ===== */
+.card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.05);
+}
+
+h1 {
+  text-align: center;
+  margin: 10px 0 25px;
+  font-size: 28px;
+}
+
+/* ===== TOOLBAR ===== */
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-add {
+  background: #000;
+  color: #fff;
+}
+
+/* ===== TABLE ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+thead tr { background: #000; }
+
+thead th {
+  color: #fff;
+  font-weight: bold;
+}
+
+th, td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+}
+
+tbody tr:hover {
+  background: #fafafa;
+  cursor: pointer;
+}
+
+/* ===== BADGE ===== */
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #e0e0e0;
+}
+</style>
+</head>
+
+<body>
+
+<div class="page">
+
+  <div class="top-bar">
+    <button onclick="location.href='index.html'">กลับหน้าแรก</button>
+    <button onclick="logout()">Log out</button>
+  </div>
+
+  <img src="images/logo.png" class="logo-img" alt="QUARK Logo">
+
+  <div class="card">
+
+    <h1>🧾 ใบกำกับภาษี / ใบเสร็จรับเงิน</h1>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar" id="action-buttons" style="display:none">
+      <button class="btn btn-add" onclick="location.href='customers.html'">➕ เพิ่มรหัสลูกค้า</button>
+      <button class="btn btn-add" onclick="location.href='invoice.html'">➕ สร้างใบกำกับ</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>เลขที่เอกสาร</th>
+          <th>ลูกค้า</th>
+          <th>วันที่</th>
+          <th>ยอดรวม</th>
+        </tr>
+      </thead>
+      <tbody id="invoice-body">
+        <tr>
+          <td colspan="4">กำลังโหลดข้อมูล...</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+</div>
+
+<script>
+function logout() {
+  localStorage.clear();
+  location.href = '/login.html';
+}
+
+async function loadInvoices() {
+  const res = await fetch('/api/invoices', { credentials: 'include' });
+  const data = await res.json();
+
+  const tbody = document.getElementById('invoice-body');
+  tbody.innerHTML = '';
+
+  if (data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4">ยังไม่มีเอกสาร</td></tr>`;
+    return;
+  }
+
+  data.forEach(inv => {
+    const tr = document.createElement('tr');
+    tr.onclick = () => {
+      location.href = `invoice.html?id=${inv.id}`;
+    };
+
+    tr.innerHTML = `
+      <td>
+        <div><b>IV${inv.invoice_no}</b></div>
+        <div class="badge">RE${inv.receipt_no}</div>
+      </td>
+      <td>${inv.customer_name || '-'}</td>
+      <td>${new Date(inv.invoice_date).toLocaleDateString('th-TH')}</td>
+      <td>${Number(inv.grand_total).toLocaleString()}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+(async () => {
+  const res = await fetch('/api/me', { credentials: 'include' });
+  if (!res.ok) {
+    location.href = 'login.html';
+    return;
+  }
+
+  const me = await res.json();
+
+  if (me.role === 'admin' || me.role === 'quarkmgr') {
+    document.getElementById('action-buttons').style.display = 'flex';
+  }
+
+  loadInvoices();
+})();
+</script>
+
+</body>
+</html>

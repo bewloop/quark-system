@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Payroll</title>
+<style>
+body { font-family: Arial; padding:20px; max-width:700px; margin:auto;}
+input,select { width:100%; padding:8px; margin-top:5px; }
+button { padding:10px; margin-top:15px; width:100%; }
+.result { font-size:22px; font-weight:bold; margin-top:15px;}
+.hidden { display:none; }
+</style>
+</head>
+<body>
+
+<h2>ระบบคำนวณเงินเดือน</h2>
+
+<label>รอบเดือน</label>
+<input type="month" id="period">
+
+<label>ชื่อ</label>
+<input type="text" id="name">
+
+<label>ตำแหน่ง</label>
+<select id="position" onchange="toggle()">
+  <option value="cut">ช่างตัด</option>
+  <option value="edge">ช่างกุ๊น</option>
+  <option value="laminate">ช่างประกบ</option>
+  <option value="qc">QC</option>
+</select>
+
+<div id="dailySection">
+  <label>ค่าแรงรายวัน</label>
+  <input type="number" id="dailyRate" value="0">
+</div>
+
+<label>วันทำงาน</label>
+<input type="number" id="workDays" value="0">
+
+<div id="jobSection" class="hidden">
+  <label>จำนวนงาน</label>
+  <input type="number" id="jobCount" value="0">
+</div>
+
+<label>OT (บาทรวม)</label>
+<input type="number" id="otPay" value="0">
+
+<label>โบนัส</label>
+<input type="number" id="bonus" value="0">
+
+<label>หักเงิน</label>
+<input type="number" id="deduct" value="0">
+
+<button onclick="calculate()">คำนวณ</button>
+
+<div class="result">
+รวมสุทธิ: <span id="total">0</span> บาท
+</div>
+
+<button onclick="save()">บันทึก</button>
+
+<script>
+
+function toggle(){
+  const pos = document.getElementById('position').value;
+  document.getElementById('jobSection').classList.toggle('hidden', pos==='cut' || pos==='qc');
+  document.getElementById('dailySection').classList.toggle('hidden', pos==='laminate');
+}
+
+function calculate(){
+
+  const pos = document.getElementById('position').value;
+  const daily = parseFloat(dailyRate.value) || 0;
+  const days = parseFloat(workDays.value) || 0;
+  const jobs = parseFloat(jobCount.value) || 0;
+  const ot = parseFloat(otPay.value) || 0;
+  const bonusVal = parseFloat(bonus.value) || 0;
+  const deductVal = parseFloat(deduct.value) || 0;
+
+  let total = 0;
+
+  // ช่างตัด & QC
+  if(pos==='cut' || pos==='qc'){
+    total = daily * days;
+  }
+
+  // ช่างกุ๊น
+  if(pos==='edge'){
+    total = daily * days;
+
+    if(jobs >= 50 && jobs < 100) total += 500;
+    else if(jobs >= 100 && jobs < 200) total += 1000;
+    else if(jobs >= 200) total += 2000;
+  }
+
+  // ช่างประกบ
+  if(pos==='laminate'){
+    if(jobs <= 50) total = jobs * 20;
+    else if(jobs <= 100) total = jobs * 25;
+    else total = jobs * 30;
+  }
+
+  total = total + ot + bonusVal - deductVal;
+
+  document.getElementById('total').innerText = total.toLocaleString();
+}
+
+async function save(){
+
+  const total = document.getElementById('total').innerText.replace(/,/g,'');
+
+  await fetch('/api/payroll',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      period: period.value,
+      start_date: period.value+'-01',
+      end_date: period.value+'-30',
+      name: name.value,
+      position: position.value,
+      total: total
+    })
+  });
+
+  alert("บันทึกสำเร็จ");
+}
+
+toggle();
+
+</script>
+
+</body>
+</html>

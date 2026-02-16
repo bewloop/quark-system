@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Customers | QUARK</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+  padding: 20px;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+.container {
+  max-width: 1100px;
+  margin: auto;
+  background: #fff;
+  padding: 20px;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+button {
+  padding: 8px 14px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: #000;
+  color: #fff;
+}
+
+.btn-danger {
+  background: #c0392b;
+  color: #fff;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  font-size: 14px;
+}
+
+th {
+  background: #eee;
+}
+
+tr:hover {
+  background: #f9f9f9;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-box {
+  width: 500px;
+  background: #fff;
+  padding: 20px;
+}
+
+.modal-box h2 {
+  margin-top: 0;
+}
+
+.form-group {
+  margin-bottom: 10px;
+}
+
+label {
+  font-size: 13px;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 6px;
+  font-size: 14px;
+}
+
+.modal-actions {
+  text-align: right;
+  margin-top: 15px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>จัดการลูกค้า</h1>
+
+  <div class="actions">
+    <div></div>
+    <button class="btn-primary" onclick="openAdd()">+ เพิ่มลูกค้า</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>รหัสลูกค้า</th>
+        <th>ชื่อลูกค้า</th>
+        <th>ที่อยู่</th>
+        <th>เลขผู้เสียภาษี</th>
+        <th width="120">จัดการ</th>
+      </tr>
+    </thead>
+    <tbody id="customerTable"></tbody>
+  </table>
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <h2 id="modalTitle">เพิ่มลูกค้า</h2>
+
+    <input type="hidden" id="customerId">
+
+    <div class="form-group">
+      <label>รหัสลูกค้า</label>
+      <input id="customerCode">
+    </div>
+
+    <div class="form-group">
+      <label>ชื่อลูกค้า</label>
+      <input id="customerName">
+    </div>
+
+    <div class="form-group">
+      <label>ที่อยู่</label>
+      <textarea id="customerAddress" rows="3"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>เลขผู้เสียภาษี</label>
+      <input id="customerTax">
+    </div>
+
+    <div class="modal-actions">
+      <button onclick="closeModal()">ยกเลิก</button>
+      <button class="btn-primary" onclick="saveCustomer()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let customers = [];
+
+async function loadCustomers() {
+  const res = await fetch('/api/customers');
+  customers = await res.json();
+
+  customerTable.innerHTML = '';
+  customers.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${c.customer_code}</td>
+      <td>${c.name}</td>
+      <td>${c.address || ''}</td>
+      <td>${c.tax_id || ''}</td>
+      <td>
+        <button onclick="editCustomer(${c.id})">แก้ไข</button>
+        <button class="btn-danger" onclick="deleteCustomer(${c.id})">ลบ</button>
+      </td>
+    `;
+    customerTable.appendChild(tr);
+  });
+}
+
+function openAdd() {
+  modalTitle.innerText = 'เพิ่มลูกค้า';
+  customerId.value = '';
+  customerCode.value = '';
+  customerName.value = '';
+  customerAddress.value = '';
+  customerTax.value = '';
+  modal.style.display = 'flex';
+}
+
+function editCustomer(id) {
+  const c = customers.find(x => x.id === id);
+  modalTitle.innerText = 'แก้ไขลูกค้า';
+  customerId.value = c.id;
+  customerCode.value = c.customer_code;
+  customerName.value = c.name;
+  customerAddress.value = c.address;
+  customerTax.value = c.tax_id;
+  modal.style.display = 'flex';
+}
+
+function closeModal() {
+  modal.style.display = 'none';
+}
+
+async function saveCustomer() {
+  const payload = {
+    customer_code: customerCode.value.trim(),
+    name: customerName.value.trim(),
+    address: customerAddress.value.trim(),
+    tax_id: customerTax.value.trim()
+  };
+
+  if (!payload.customer_code || !payload.name) {
+    alert('กรอกรหัสลูกค้า และชื่อ');
+    return;
+  }
+
+  if (customerId.value) {
+    await fetch(`/api/customers/${customerId.value}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+  } else {
+    await fetch('/api/customers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+  }
+
+  closeModal();
+  loadCustomers();
+}
+
+async function deleteCustomer(id) {
+  if (!confirm('ลบลูกค้านี้?')) return;
+  await fetch(`/api/customers/${id}`, { method: 'DELETE' });
+  loadCustomers();
+}
+
+loadCustomers();
+</script>
+
+</body>
+</html>

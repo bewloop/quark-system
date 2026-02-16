@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Invoice | QUARK</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+  padding: 20px;
+}
+
+/* ===== ACTION BAR (OUTSIDE FORM) ===== */
+.top-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+
+button {
+  padding: 8px 14px;
+  background: #000;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+/* ===== PAGE A4 FIX ===== */
+.page {
+  width: 210mm;
+  min-height: 297mm;   /* ✅ ใช้ min-height */
+  background: #fff;
+  margin: auto;
+  padding: 12mm;       /* ลด padding */
+  color: #000;
+  overflow: hidden;
+}
+
+.row { display: flex; justify-content: space-between; gap: 20px; }
+.col { flex: 1; }
+
+input, textarea, select {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #000;
+  padding: 4px;
+  font-size: 14px;
+}
+
+input[readonly], textarea[readonly] {
+  background: #fafafa;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+th {
+  font-size: 13px;
+  padding: 6px;
+  border: 1px solid #000;
+}
+
+td {
+  border: 1px solid #000;
+  padding: 3px;
+  font-size: 12px;
+  height: 28px;
+}
+
+td input, td textarea {
+  border: none;
+  font-size: 12px;
+  width: 100%;
+}
+
+td textarea {
+  resize: none;
+  height: 28px;
+}
+
+.summary-wrap {
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.note-box {
+  flex: 1;
+  border: 1px solid #000;
+  padding: 8px;
+}
+
+.summary {
+  width: 45%;
+}
+
+.summary td { border: none; }
+.summary input { text-align: right; }
+
+.footer-text {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.signatures {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 28px;
+}
+
+.signature-box {
+  width: 45%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.signature-line {
+  width: 100%;
+  margin-top: 36px;
+  border-top: 1px solid #000;
+  padding-top: 6px;
+}
+
+.sign-date {
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+.copy-label {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+
+/* ================= PRINT ================= */
+@media print {
+  body {
+    padding: 0;
+    margin: 0;
+    background: #fff;
+    zoom: 0.85;          /* 🔥 คุมทั้งต้นฉบับ + สำเนา */
+  }
+
+  /* ซ่อนปุ่ม */
+  .top-actions,
+  .actions {
+    display: none !important;
+  }
+
+  /* ป้องกันโดนตัดหน้า */
+  .signatures,
+  .footer-text {
+    page-break-inside: avoid;
+  }
+
+  table {
+    font-size: 12px;
+  }
+
+  .company-name {
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 1.1;
+    max-width: 700px;
+    white-space: normal;
+    word-break: break-word;
+    margin-bottom: 4px;
+  }
+
+  @page {
+    size: A4;
+    margin: 8mm;
+  }
+}
+
+@media print {
+  .page {
+    page-break-after: always;   /* ⭐ บังคับจบหน้า */
+    height: 297mm;              /* ⭐ FIX ความสูงจริง */
+    overflow: hidden;           /* ⭐ ห้ามล้น */
+  }
+
+  #copy-container .page:last-child {
+    page-break-after: auto;     /* หน้าสุดท้ายไม่ต้องแตก */
+  }
+}
+
+/* ===== RECEIPT ONLY ===== */
+.receipt-page .credit-row {
+  display: none;
+}
+
+.receipt-page .signature-left::before {
+  content: "ผู้รับเงิน";
+}
+
+.receipt-page .signature-right::before {
+  content: "ผู้รับมอบอำนาจ";
+}
+
+/* ซ่อนข้อความเดิม */
+.receipt-page .signature-left .signature-line,
+.receipt-page .signature-right .signature-line {
+  display: none;
+}
+
+select {
+  caret-color: transparent;
+}
+
+
+</style>
+</head>
+
+<body>
+
+<!-- ACTIONS OUTSIDE FORM -->
+<div class="top-actions">
+  <button onclick="saveInvoice()">บันทึก</button>
+  <button onclick="window.print()">พิมพ์</button>
+</div>
+
+<div class="invoice-page">
+<div id="invoice-template" class="page">
+
+  <!-- HEADER -->
+  <div class="row">
+    <div class="col">
+      <div style="display:flex;align-items:center;gap:4px">
+        <img src="images/logotbt.png" style="height:50px">
+        <div class="company-name">
+          <b>บริษัท ทริปเปิลบีเทรดดิ้ง จำกัด</b><br>
+          295/1 หมู่ 1 ถนนบางบอน 5 ซอย 5 ตำบลแคราย อำเภอกระทุ่มแบน จังหวัดสมุทรสาคร 74110<br>
+          โทร 02-100-4580<br>
+          เลขผู้เสียภาษี 0105557103812
+        </div>
+      </div>
+    </div>
+
+    <div class="col" style="text-align:right">
+      <div id="copyType" class="copy-label">ต้นฉบับ</div>
+      <b id="docTitle">ใบกำกับภาษี / ใบส่งของ</b>
+    </div>
+  </div>
+
+  <!-- CUSTOMER -->
+  <div class="row" style="margin-top:18px">
+    <div class="col">
+      ลูกค้า:
+      <select id="customerSelect"></select>
+      ชื่อ:
+      <input id="customerName" readonly>
+      ที่อยู่:
+      <textarea id="customerAddress" rows="2" readonly></textarea>
+      เลขผู้เสียภาษี:
+      <input id="customerTax" readonly>
+    </div>
+
+    <div class="col credit-row">>
+      เลขที่เอกสาร:
+      <input id="invoiceNo" readonly>
+      วันที่:
+      <input type="date" id="invoiceDate">
+      เครดิต (วัน):
+      <input type="number" id="creditDays" value="0">
+      ครบกำหนด:
+      <input type="date" id="dueDate" readonly>
+    </div>
+  </div>
+
+  <!-- ITEMS -->
+  <table>
+    <thead>
+      <tr>
+        <th width="40">NO</th>
+        <th>รายละเอียด</th>
+        <th width="70">จำนวน</th>
+        <th width="90">หน่วยละ</th>
+        <th width="110">ราคารวม</th>
+      </tr>
+    </thead>
+    <tbody id="itemsBody"></tbody>
+  </table>
+
+  <!-- NOTE + SUMMARY -->
+  <div class="summary-wrap">
+    <div class="note-box">
+      <b>หมายเหตุ</b><br>
+      <textarea rows="4" style="border:none;width:100%;resize:none"></textarea>
+    </div>
+
+    <table class="summary">
+      <tr><td>รวมเป็นเงิน</td><td><input id="totalAmount" readonly></td></tr>
+      <tr><td>หัก ส่วนลด</td><td><input id="discount" value="0"></td></tr>
+      <tr><td>ยอดหลังหักส่วนลด</td><td><input id="afterDiscount" readonly></td></tr>
+      <tr><td>หัก เงินมัดจำ</td><td><input id="deposit" value="0"></td></tr>
+      <tr><td>จำนวนเงิน</td><td><input id="netAmount" readonly></td></tr>
+      <tr><td>VAT 7%</td><td><input id="vatAmount" readonly></td></tr>
+      <tr><td><b>รวมสุทธิ</b></td><td><input id="grandTotal" readonly></td></tr>
+    </table>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer-text">
+    ได้รับสินค้าตามรายการด้านบนถูกต้อง ครบถ้วน และอยู่ในสภาพสมบูรณ์เรียบร้อยทุกประการ
+  </div>
+
+  <!-- SIGNATURE -->
+<div class="signatures">
+  <div class="signature-box signature-left">
+    <div class="signature-line">ผู้รับสินค้า</div>
+    <div class="sign-date">วันที่ ______ / ______ / ______</div>
+  </div>
+
+  <div class="signature-box signature-right">
+    ในนามบริษัท ทริปเปิลบีเทรดดิ้ง จำกัด
+    <div class="signature-line">ผู้รับมอบอำนาจ</div>
+    <div class="sign-date">วันที่ ______ / ______ / ______</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<div id="copy-container"></div>
+
+<script>
+const MAX_ROWS = 10;
+const params = new URLSearchParams(location.search);
+const invoiceId = params.get('id');
+
+/* ===== customers ===== */
+async function loadCustomers() {
+  const res = await fetch('/api/customers');
+  const customers = await res.json();
+
+  customerSelect.innerHTML = '<option value="">-- เลือกลูกค้า --</option>';
+  customers.forEach(c => {
+    customerSelect.innerHTML += `
+      <option value="${c.id}">${c.customer_code} - ${c.name}</option>
+    `;
+  });
+
+  customerSelect.onchange = () => {
+    const c = customers.find(x => x.id == customerSelect.value);
+    if (!c) return;
+    customerName.value = c.name;
+    customerAddress.value = c.address;
+    customerTax.value = c.tax_id;
+  };
+}
+
+/* ===== rows (LOCK 10) ===== */
+function addRow(item = {}) {
+  if (itemsBody.children.length >= MAX_ROWS) return;
+
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${itemsBody.children.length + 1}</td>
+    <td><textarea>${item.description || ''}</textarea></td>
+    <td><input type="number" value="${item.qty || ''}" oninput="calcRow(this)"></td>
+    <td><input type="number" value="${item.unit_price || ''}" oninput="calcRow(this)"></td>
+    <td><input readonly value="${item.total || ''}"></td>
+  `;
+  itemsBody.appendChild(tr);
+  calcSummary();
+}
+
+/* เติมแถวเปล่าให้ครบ 10 */
+function fillEmptyRows() {
+  while (itemsBody.children.length < MAX_ROWS) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${itemsBody.children.length + 1}</td>
+      <td></td><td></td><td></td><td></td>
+    `;
+    itemsBody.appendChild(tr);
+  }
+}
+
+/* ===== calc ===== */
+function calcRow(el) {
+  const tr = el.closest('tr');
+  const qty = +tr.children[2].querySelector('input').value || 0;
+  const price = +tr.children[3].querySelector('input').value || 0;
+  tr.children[4].querySelector('input').value = (qty * price).toFixed(2);
+  calcSummary();
+}
+
+function calcSummary() {
+  let total = 0;
+  document.querySelectorAll('#itemsBody tr').forEach(tr => {
+    const v = tr.children[4].querySelector('input');
+    if (v) total += +v.value || 0;
+  });
+
+  totalAmount.value = total.toFixed(2);
+  afterDiscount.value = (total - (+discount.value || 0)).toFixed(2);
+  netAmount.value = (afterDiscount.value - (+deposit.value || 0)).toFixed(2);
+  vatAmount.value = (netAmount.value * 0.07).toFixed(2);
+  grandTotal.value = (+netAmount.value + +vatAmount.value).toFixed(2);
+}
+
+discount.addEventListener('input', calcSummary);
+deposit.addEventListener('input', calcSummary);
+
+creditDays.addEventListener('input', () => {
+  if (!invoiceDate.value) return;
+  const d = new Date(invoiceDate.value);
+  d.setDate(d.getDate() + (+creditDays.value || 0));
+  dueDate.value = d.toISOString().slice(0,10);
+});
+
+/* ===== load invoice ===== */
+async function loadInvoice() {
+  const res = await fetch(`/api/invoices/${invoiceId}`);
+  const data = await res.json();
+  const i = data.invoice;
+
+  invoiceNo.value = i.invoice_no || i.receipt_no;
+  invoiceDate.value = i.invoice_date?.slice(0,10);
+  creditDays.value = i.credit_days;
+  dueDate.value = i.due_date?.slice(0,10);
+
+  customerSelect.value = i.customer_id;
+  customerName.value = i.customer_name;
+  customerAddress.value = i.customer_address;
+  customerTax.value = i.customer_tax;
+
+  discount.value = i.discount || 0;
+  deposit.value = i.deposit || 0;
+
+  data.items.slice(0, MAX_ROWS).forEach(addRow);
+  fillEmptyRows();
+  calcSummary();
+}
+
+async function loadNextInvoiceNo() {
+  const res = await fetch('/api/invoices/next-number');
+  const data = await res.json();
+  invoiceNo.value = data.invoice_no;
+}
+
+/* ===== save ===== */
+async function saveInvoice() {
+  if (!customerSelect.value) return alert('กรุณาเลือกลูกค้า');
+
+  const items = [];
+  document.querySelectorAll('#itemsBody tr').forEach((tr, i) => {
+    const desc = tr.children[1].querySelector('textarea');
+    if (!desc || !desc.value) return;
+
+    items.push({
+      item_no: i + 1,
+      description: desc.value,
+      qty: +tr.children[2].querySelector('input').value,
+      unit_price: +tr.children[3].querySelector('input').value,
+      total: +tr.children[4].querySelector('input').value
+    });
+  });
+
+  const payload = {
+    customer_id: customerSelect.value,
+    invoice_date: invoiceDate.value,
+    credit_days: creditDays.value,
+    due_date: dueDate.value,
+    totals: {
+      total: +totalAmount.value,
+      discount: +discount.value,
+      afterDiscount: +afterDiscount.value,
+      deposit: +deposit.value,
+      net: +netAmount.value,
+      vat: +vatAmount.value,
+      grand: +grandTotal.value
+    },
+    items
+  };
+
+  const res = await fetch('/api/invoices', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  const result = await res.json();
+  alert(`บันทึกสำเร็จ\n${result.invoice_no} / ${result.receipt_no}`);
+  location.href = '/invoice-index.html';
+}
+
+/* ===== init ===== */
+loadCustomers();
+invoiceDate.valueAsDate = new Date();
+addRow();
+fillEmptyRows();
+
+if (invoiceId) {
+  loadInvoice();
+} else {
+  loadNextInvoiceNo(); // ⭐ เลขเด้งทันทีตอนเปิดหน้า
+}
+
+/* ===== PRINT COPY ===== */
+window.addEventListener('beforeprint', () => {
+  const original = document.getElementById('invoice-template');
+  const container = document.getElementById('copy-container');
+  container.innerHTML = '';
+
+  /* ===== PAGE 2 : สำเนา ===== */
+  const copy = original.cloneNode(true);
+  copy.querySelector('#copyType').innerText = 'สำเนา';
+  copy.querySelector('#docTitle').innerText = 'ใบกำกับภาษี / ใบส่งของ';
+  container.appendChild(copy);
+
+  /* ===== PAGE 3 : ใบเสร็จรับเงิน ===== */
+    const receipt = original.cloneNode(true);
+    receipt.classList.add('receipt-page'); // ⭐ สำคัญมาก
+
+    receipt.querySelector('#copyType').innerText = 'ต้นฉบับ';
+    receipt.querySelector('#docTitle').innerText = 'ใบเสร็จรับเงิน';
+
+    /* ไม่ใช้เครดิต */
+    receipt.querySelector('#creditDays').value = '';
+    receipt.querySelector('#dueDate').value = '';
+
+    container.appendChild(receipt);
+});
+
+window.addEventListener('afterprint', () => {
+  document.getElementById('copy-container').innerHTML = '';
+});
+
+async function loadInvoiceNo() {
+  try {
+    const res = await fetch('/api/invoices/next-number/iv');
+    const data = await res.json();
+
+    document.getElementById('invoiceNo').value = data.invoice_no;
+  } catch (err) {
+    console.error(err);
+    document.getElementById('invoiceNo').value = '';
+  }
+}
+
+window.addEventListener('DOMContentLoaded', loadInvoiceNo);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Invoice</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+  padding: 20px;
+}
+
+.page {
+  width: 210mm;
+  background: #fff;
+  margin: auto;
+  padding: 20px;
+  color: #000;
+}
+
+.row { display: flex; justify-content: space-between; }
+.col { width: 48%; }
+
+input, textarea, select {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #000;
+  padding: 4px;
+  font-size: 14px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th, td {
+  border: 1px solid #000;
+  padding: 6px;
+  font-size: 14px;
+}
+
+.summary {
+  width: 45%;
+  float: right;
+  margin-top: 10px;
+}
+
+.summary td {
+  border: none;
+}
+
+.summary input {
+  text-align: right;
+}
+
+.actions {
+  margin-top: 20px;
+  text-align: right;
+}
+</style>
+</head>
+
+<body>
+
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="row">
+    <div class="col">
+      <b>บริษัท ทริปเปิ้ลเทรดดิ้ง จำกัด</b><br>
+      295/1 หมู่ 1 ถนนบางบอน 5<br>
+      โทร 02-100-4580<br>
+      เลขผู้เสียภาษี 0105557103812
+    </div>
+    <div class="col" style="text-align:right">
+      <b>ต้นฉบับ</b><br>
+      ใบส่งสินค้า / ใบกำกับภาษี
+    </div>
+  </div>
+
+  <!-- CUSTOMER -->
+  <div class="row" style="margin-top:20px">
+    <div class="col">
+      ลูกค้า:
+      <select id="customerSelect">
+        <option value="">-- เลือกลูกค้า --</option>
+      </select><br>
+      ชื่อ:
+      <input id="customerName" readonly>
+      ที่อยู่:
+      <textarea id="customerAddress" rows="2" readonly></textarea>
+      เลขผู้เสียภาษี:
+      <input id="customerTax" readonly>
+    </div>
+
+    <div class="col">
+      เลขที่:
+      <input id="invoiceNo" placeholder="จะรันอัตโนมัติภายหลัง"><br>
+      วันที่:
+      <input type="date" id="invoiceDate"><br>
+      เครดิต (วัน):
+      <input type="number" id="creditDays" value="0"><br>
+      ครบกำหนด:
+      <input type="date" id="dueDate" readonly>
+    </div>
+  </div>
+
+  <!-- ITEMS -->
+  <table>
+    <thead>
+      <tr>
+        <th width="40">NO</th>
+        <th>รายละเอียด</th>
+        <th width="80">จำนวน</th>
+        <th width="100">หน่วยละ</th>
+        <th width="120">ราคารวม</th>
+      </tr>
+    </thead>
+    <tbody id="itemsBody">
+      <tr>
+        <td>1</td>
+        <td><input></td>
+        <td><input></td>
+        <td><input></td>
+        <td><input></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- SUMMARY -->
+  <table class="summary">
+    <tr>
+      <td>รวมเป็นเงิน</td>
+      <td><input id="totalAmount"></td>
+    </tr>
+    <tr>
+      <td>หัก ส่วนลด</td>
+      <td><input id="discount" value="0"></td>
+    </tr>
+    <tr>
+      <td>ยอดหลังหักส่วนลด</td>
+      <td><input id="afterDiscount" readonly></td>
+    </tr>
+    <tr>
+      <td>หัก เงินมัดจำ</td>
+      <td><input id="deposit" value="0"></td>
+    </tr>
+    <tr>
+      <td>จำนวนเงินรวมทั้งสิ้น</td>
+      <td><input id="netAmount" readonly></td>
+    </tr>
+    <tr>
+      <td>ภาษีมูลค่าเพิ่ม 7%</td>
+      <td><input id="vatAmount" readonly></td>
+    </tr>
+    <tr>
+      <td>ราคาสินค้า</td>
+      <td><input id="grandTotal" readonly></td>
+    </tr>
+  </table>
+
+  <div class="actions">
+    <button onclick="saveAndPrint()">พิมพ์</button>
+  </div>
+
+</div>
+
+<script>
+/* ===============================
+   INIT DATE
+   =============================== */
+const today = new Date().toISOString().slice(0,10);
+invoiceDate.value = today;
+dueDate.value = today;
+
+/* ===============================
+   AUTO CALC SUMMARY
+   =============================== */
+function calcSummary() {
+  const total = +totalAmount.value || 0;
+  const discountVal = +discount.value || 0;
+  const depositVal = +deposit.value || 0;
+
+  afterDiscount.value = (total - discountVal).toFixed(2);
+  netAmount.value = (afterDiscount.value - depositVal).toFixed(2);
+  vatAmount.value = (netAmount.value * 0.07).toFixed(2);
+  grandTotal.value = (+netAmount.value + +vatAmount.value).toFixed(2);
+}
+
+['totalAmount','discount','deposit'].forEach(id => {
+  document.getElementById(id).addEventListener('input', calcSummary);
+});
+
+/* ===============================
+   CREDIT → DUE DATE
+   =============================== */
+creditDays.addEventListener('input', () => {
+  if (!invoiceDate.value) return;
+  const d = new Date(invoiceDate.value);
+  d.setDate(d.getDate() + (+creditDays.value || 0));
+  dueDate.value = d.toISOString().slice(0,10);
+});
+
+/* ===============================
+   LOAD CUSTOMERS
+   =============================== */
+let customers = [];
+
+async function loadCustomers() {
+  const res = await fetch('/api/customers');
+  customers = await res.json();
+
+  customers.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = `${c.customer_code} - ${c.name}`;
+    customerSelect.appendChild(opt);
+  });
+}
+
+customerSelect.addEventListener('change', () => {
+  const c = customers.find(x => x.id == customerSelect.value);
+  if (!c) {
+    customerName.value = '';
+    customerAddress.value = '';
+    customerTax.value = '';
+    return;
+  }
+  customerName.value = c.name;
+  customerAddress.value = c.address || '';
+  customerTax.value = c.tax_id || '';
+});
+
+loadCustomers();
+
+/* ===============================
+   SAVE & PRINT (NEXT STEP)
+   =============================== */
+
+async function saveAndPrint() {
+
+  if (!customerSelect.value) {
+    alert('กรุณาเลือกลูกค้า');
+    return;
+  }
+
+  const items = [];
+  document.querySelectorAll('#itemsBody tr').forEach(tr => {
+    const tds = tr.querySelectorAll('input');
+    if (!tds[0].value) return;
+
+    items.push({
+      description: tds[0].value,
+      qty: tds[1].value,
+      unit_price: tds[2].value,
+      total: tds[3].value
+    });
+  });
+
+  const payload = {
+    customer_id: customerSelect.value,
+    invoice_date: invoiceDate.value,
+    credit_days: creditDays.value,
+    due_date: dueDate.value,
+    note: '',
+    totals: {
+      total_amount: totalAmount.value,
+      discount: discount.value,
+      after_discount: afterDiscount.value,
+      deposit: deposit.value,
+      net_amount: netAmount.value,
+      vat_amount: vatAmount.value,
+      grand_total: grandTotal.value
+    },
+    items
+  };
+
+  const res = await fetch('/api/invoices', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert('บันทึก invoice ไม่สำเร็จ');
+    return;
+  }
+
+  // STEP 4 จะใช้ตรงนี้
+  window.location.href = `/invoice-print.html?id=${data.invoice_id}`;
+}
+</script>
+
+</script>
+
+</body>
+</html>

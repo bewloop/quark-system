@@ -6,144 +6,191 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+* { box-sizing: border-box; }
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f5f5f5;
+  background: #f2f2f2;
 }
 
-.top-actions {
-  position: fixed;
-  top: 16px;
-  right: 16px;
+.page {
+  max-width: 700px;
+  margin: 30px auto;
+  padding: 0 20px;
 }
 
-.top-actions button {
-  margin-left: 8px;
-  padding: 6px 12px;
-  border-radius: 6px;
+/* ===== TOP BAR ===== */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.top-bar button {
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 8px;
   border: none;
-  cursor: pointer;
   background: #000;
   color: #fff;
-  font-size: 12px;
+  cursor: pointer;
 }
 
-.container {
-  max-width: 520px;
-  margin: 90px auto;
+.top-bar button:hover { opacity: .85; }
+
+/* ===== CARD ===== */
+.card {
   background: #fff;
-  padding: 30px;
-  border-radius: 12px;
+  border-radius: 14px;
+  padding: 28px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.05);
 }
 
-h2 {
-  margin-top: 0;
+/* ===== TITLE ===== */
+h1 {
+  margin: 0 0 24px;
   text-align: center;
+  font-size: 28px;
 }
 
+/* ===== FORM ===== */
 label {
-  font-size: 13px;
-  margin-top: 14px;
   display: block;
+  margin-top: 14px;
+  font-size: 13px;
+  color: #444;
 }
 
-input, select, textarea {
+input,
+select,
+textarea {
   width: 100%;
-  padding: 10px;
+  padding: 10px 12px;
   margin-top: 6px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 13px;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
 }
 
 input[disabled] {
   background: #eee;
 }
 
-button.submit-btn {
+/* ===== ACTION ===== */
+.submit-btn {
   margin-top: 28px;
   width: 100%;
   padding: 12px;
   background: #000;
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 15px;
   cursor: pointer;
+}
+
+.submit-btn:hover { opacity: .9; }
+
+/* ===== LOGO ===== */
+.logo-img {
+  width: 1000px;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto 20px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="top-actions">
-  <button onclick="history.back()">Back</button>
-  <button onclick="logout()">Logout</button>
-</div>
+<div class="page">
 
-<div class="container">
-<h2>Edit Order</h2>
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <button onclick="history.back()">← กลับ</button>
+    <button onclick="logout()">Log out</button>
+  </div>
 
-<form id="orderForm">
+  <!-- LOGO -->
+  <img src="images/logo.png" class="logo-img" alt="QUARK Logo">
 
-  <label>Order ID</label>
-  <input id="order_id" disabled>
+  <!-- CARD -->
+  <div class="card">
+    <h1>แก้ไขออเดอร์</h1>
 
-  <label>วันที่สั่งงาน</label>
-  <input type="date" id="order_date" required>
+    <form id="orderForm">
 
-  <label>ช่องทางขาย</label>
-  <select id="channel">
-    <option>LAZM</option>
-    <option>LAZFL</option>
-    <option>Shopee Q1</option>
-    <option>Shopee Q3</option>
-    <option>Shopee Q4</option>
-    <option>Line Q1</option>
-    <option>Line Q3</option>
-    <option>Facebook</option>
-    <option>Tiktok Q1</option>
-    <option>Tiktok Q3</option>
-    <option>หน้าร้าน</option>
-  </select>
+      <label>Order ID</label>
+      <input id="order_id" disabled>
 
-  <label>ชื่อลูกค้า</label>
-  <input id="customer">
+      <label>วันที่สั่งงาน</label>
+      <input type="date" id="order_date" required>
 
-  <label>รุ่นรถ</label>
-  <input id="car_model">
+      <label>ช่องทางขาย</label>
+      <select id="channel">
+        <option>LAZM</option>
+        <option>LAZFL</option>
+        <option>Shopee Q1</option>
+        <option>Shopee Q3</option>
+        <option>Shopee Q4</option>
+        <option>Line Q1</option>
+        <option>Line Q2</option>
+        <option>Line Q3</option>
+        <option>Facebook</option>
+        <option>Tiktok Q1</option>
+        <option>Tiktok Q3</option>
+        <option>หน้าร้าน</option>
+      </select>
 
-  <label>ปีรถ</label>
-  <input id="car_year">
+      <label>ชื่อลูกค้า</label>
+      <input id="customer">
 
-  <label>สีพรม</label>
-  <input id="mat_color">
+      <label>รุ่นรถ</label>
+      <input id="car_model">
 
-  <label>ประเภทพรม</label>
-  <select id="mat_type">
-    <option value="พรม6D">พรม 6D</option>
-    <option value="พรมกระดุม">พรมกระดุม</option>
-    <option value="พรมVIP">พรม VIP</option>
-    <option value="พรมดักฝุ่น">พรมดักฝุ่น</option>
-  </select>
+      <label>ปีรถ</label>
+      <input id="car_year">
 
-  <label>จำนวน</label>
-  <input type="number" id="mat_qty" min="1">
+      <label>สีพรม</label>
+      <input id="mat_color">
 
-  <label>การชำระเงิน</label>
-  <select id="payment_status">
-    <option value="จ่ายแล้ว">จ่ายแล้ว</option>
-    <option value="จ่ายผ่านแอพ">จ่ายผ่านแอพ</option>
-    <option value="COD">COD</option>
-    <option value="VATชำระแล้ว">VAT ชำระแล้ว</option>
-    <option value="VATรอชำระ">VAT รอชำระ</option>
-  </select>
+      <label>ประเภทพรม</label>
+      <select id="mat_type">
+        <option value="พรม6D">พรม 6D</option>
+        <option value="พรมกระดุม">พรมกระดุม</option>
+        <option value="พรมVIP">พรม VIP</option>
+        <option value="พรมดักฝุ่น">พรมดักฝุ่น</option>
+      </select>
 
-  <label>หมายเหตุ</label>
-  <textarea id="note"></textarea>
+      <label>จำนวน</label>
+      <input type="number" id="mat_qty" min="1">
 
-  <button class="submit-btn" type="submit">💾 บันทึกการแก้ไข</button>
-</form>
+      <label>การชำระเงิน</label>
+      <select id="payment_status">
+        <option value="รอชำระ">รอชำระ</option>
+        <option value="โอนชำระแล้ว">โอนชำระแล้ว</option>
+        <option value="จ่ายผ่านแอพ">จ่ายผ่านแอพ</option>
+        <option value="COD">COD</option>
+        <option value="VATชำระแล้ว">VAT ชำระแล้ว</option>
+        <option value="VATรอชำระ">VAT รอชำระ</option>
+      </select>
+
+      <label>หมายเหตุ</label>
+      <textarea id="note"></textarea>
+
+      <button class="submit-btn" type="submit">💾 บันทึกการแก้ไข</button>
+
+    </form>
+  </div>
+
 </div>
 
 <script>
@@ -158,7 +205,7 @@ if (!orderId) {
 /* LOAD ORDER */
 (async () => {
   const res = await fetch(`/api/orders/${orderId}`, {
-    credentials: 'include' // ⭐ สำคัญมาก
+    credentials: 'include'
   });
 
   if (!res.ok) {
@@ -169,7 +216,11 @@ if (!orderId) {
   const o = await res.json();
 
   order_id.value = o.id;
-  order_date.value = o.order_date?.substring(0,10) || '';
+  order_date.value =
+    o.order_date?.substring(0,10)
+    || o.created_at?.substring(0,10)
+    || '';
+
   channel.value = o.channel || '';
   customer.value = o.customer || '';
   car_model.value = o.car_model || '';
@@ -210,8 +261,8 @@ document.getElementById('orderForm').onsubmit = async (e) => {
     return;
   }
 
-  alert('บันทึกเรียบร้อย');
-  location.href = `order-detail.html?id=${orderId}`;
+  alert('บันทึกสำเร็จ');
+  location.href = '/order.html';
 };
 
 /* LOGOUT */

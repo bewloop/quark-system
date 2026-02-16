@@ -49,6 +49,27 @@ db.serialize(() => {
       note TEXT
     )
   `);
+
+  db.run(`
+  CREATE TABLE IF NOT EXISTS payroll (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    period TEXT,            -- เช่น 2026-02
+    start_date TEXT,
+    end_date TEXT,
+    name TEXT,
+    position TEXT,
+    base_salary REAL,
+    work_days INTEGER,
+    job_count INTEGER,
+    ot_pay REAL,
+    bonus REAL,
+    deduct REAL,
+    total REAL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+
 });
 
 module.exports = db;

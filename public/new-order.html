@@ -75,6 +75,38 @@
       font-size: 15px;
       cursor: pointer;
     }
+
+
+    .option-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.option-btn {
+  padding: 8px 12px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  background: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.option-btn.active {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+}
+
+.logo-img {
+  width: 1000px;      /* ปรับตรงนี้ */
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto 20px;
+}
+
   </style>
 </head>
 
@@ -85,6 +117,7 @@
     <button onclick="logout()">Logout</button>
   </div>
 
+  <!-- LOGO -->
   <img src="images/logo.png" class="logo-img" alt="QUARK Logo">
 
   <div class="container">
@@ -95,23 +128,15 @@
       <label>วันที่สั่งงาน</label>
       <input type="date" name="order_date" id="orderDate" readonly required>
 
-      <label>ช่องทางขาย</label>
-      <select name="channel">
-        <option>LAZM</option>
-        <option>LAZFL</option>
-        <option>Shopee Q1</option>
-        <option>Shopee Q3</option>
-        <option>Shopee Q4</option>
-        <option>Line Q1</option>
-        <option>Line Q3</option>
-        <option>Facebook</option>
-        <option>Tiktok Q1</option>
-        <option>Tiktok Q3</option>
-        <option>หน้าร้าน</option>
-      </select>
+<input type="hidden" name="channel" id="channelInput" required>
 
-      <label>ชื่อลูกค้า</label>
-      <input name="customer">
+<label>ประเภทพรม</label>
+<div class="option-group" data-name="mat_type">
+  <button type="button" class="option-btn" data-value="พรม6D">พรม 6D</button>
+  <button type="button" class="option-btn" data-value="พรมกระดุม">พรมกระดุม</button>
+  <button type="button" class="option-btn" data-value="พรมVIP">พรม VIP</button>
+  <button type="button" class="option-btn" data-value="พรมดักฝุ่น">พรมดักฝุ่น</button>
+</div>
 
       <label>รุ่นรถ</label>
       <input name="car_model">
@@ -122,25 +147,55 @@
       <label>สีพรม</label>
       <input name="mat_color">
 
-      <label>ประเภทพรม</label>
-      <select name="mat_type">
-        <option value="พรม6D">พรม 6D</option>
-        <option value="พรมกระดุม">พรมกระดุม</option>
-        <option value="พรมVIP">พรม VIP</option>
-        <option value="พรมดักฝุ่น">พรมดักฝุ่น</option>
-      </select>
+<input type="hidden" name="mat_type" id="matTypeInput" required>
 
-      <label>จำนวน</label>
-      <input type="number" name="mat_qty" value="1" min="1">
+     <label>จำนวน</label>
+     <input type="number" name="mat_qty" value="1" min="1">
 
-      <label>การชำระเงิน</label>
-      <select name="payment_status">
-        <option value="จ่ายแล้ว">จ่ายแล้ว</option>
-        <option value="จ่ายผ่านแอพ">จ่ายผ่านแอพ</option>
-        <option value="COD">COD</option>
-        <option value="VATชำระแล้ว">VAT ชำระแล้ว</option>
-        <option value="VATรอชำระ">VAT รอชำระ</option>
-      </select>
+     <label>ช่องทางขาย</label>
+<div class="option-group" data-name="channel">
+  <button type="button" class="option-btn" data-value="LAZM">LAZM</button>
+  <button type="button" class="option-btn" data-value="LAZFL">LAZFL</button>
+
+  <button type="button" class="option-btn" data-value="Shopee Q1">Shopee Q1</button>
+  <button type="button" class="option-btn" data-value="Shopee Q3">Shopee Q3</button>
+  <button type="button" class="option-btn" data-value="Shopee Q4">Shopee Q4</button>
+
+  <button type="button" class="option-btn" data-value="Line Q1">LINE Q1</button>
+  <button type="button" class="option-btn" data-value="Line Q2">LINE Q2</button>
+  <button type="button" class="option-btn" data-value="Line Q3">LINE Q3</button>
+
+  <button type="button" class="option-btn" data-value="Facebook">Facebook</button>
+  <button type="button" class="option-btn" data-value="Tiktok Q1">Tiktok Q1</button>
+  <button type="button" class="option-btn" data-value="Tiktok Q3">Tiktok Q3</button>
+  <button type="button" class="option-btn" data-value="หน้าร้าน">หน้าร้าน</button>
+</div>
+
+     <label>ชื่อลูกค้า</label>
+      <input name="customer">
+
+       <label>รูปแบบชุดพรม</label>
+<div class="option-group" data-name="set_type">
+    <button type="button" class="option-btn" data-value="เฉพาะเก๋ง">เฉพาะเก๋ง</button>
+    <button type="button" class="option-btn" data-value="เต็มทั้งคัน">เต็มทั้งคัน</button>
+    <button type="button" class="option-btn" data-value="เฉพาะชุดท้าย">เฉพาะชุดท้าย</button>
+    <button type="button" class="option-btn" data-value="เฉพาะพับเบาะ">เฉพาะพับเบาะ</button>
+    <button type="button" class="option-btn" data-value="เฉพาะแผ่นท้าย">เฉพาะแผ่นท้าย</button>
+     <button type="button" class="option-btn" data-value="เฉพาะบางชิ้น">เฉพาะบางชิ้น</button>
+</div>
+<input type="hidden" name="set_type" id="setTypeInput" required>
+
+
+     <label>การชำระเงิน</label>
+<div class="option-group" data-name="payment_status">
+  <button type="button" class="option-btn" data-value="รอชำระ">รอชำระ</button>
+  <button type="button" class="option-btn" data-value="โอนชำระแล้ว">โอนชำระแล้ว</button>
+  <button type="button" class="option-btn" data-value="จ่ายผ่านแอพ">จ่ายผ่านแอพ</button>
+  <button type="button" class="option-btn" data-value="COD">COD</button>
+  <button type="button" class="option-btn" data-value="VATชำระแล้ว">VAT ชำระแล้ว</button>
+  <button type="button" class="option-btn" data-value="VATรอชำระ">VAT รอชำระ</button>
+</div>
+<input type="hidden" name="payment_status" id="paymentInput" required>
 
       <label>หมายเหตุ</label>
       <textarea name="note"></textarea>
@@ -174,20 +229,22 @@
     document.getElementById('orderForm').addEventListener('submit', async function (e) {
       e.preventDefault();
 
+      
       const f = this;
+const payload = {
+  order_date: f.order_date.value,
+  channel: document.getElementById('channelInput').value,
+  customer: f.customer.value.trim(),
+  car_model: f.car_model.value.trim(),
+  car_year: f.car_year.value.trim(),
+  mat_color: f.mat_color.value.trim(),
+  mat_type: document.getElementById('matTypeInput').value,
+  set_type: document.getElementById('setTypeInput').value, // ✅ เพิ่มตรงนี้
+  mat_qty: Number(f.mat_qty.value) || 1,
+  payment_status: document.getElementById('paymentInput').value,
+  note: f.note.value.trim()
+};
 
-      const payload = {
-        order_date: f.order_date.value,
-        channel: f.channel.value,
-        customer: f.customer.value.trim(),
-        car_model: f.car_model.value.trim(),
-        car_year: f.car_year.value.trim(),
-        mat_color: f.mat_color.value.trim(),
-        mat_type: f.mat_type.value,
-        mat_qty: Number(f.mat_qty.value) || 1,
-        payment_status: f.payment_status.value,
-        note: f.note.value.trim()
-      };
 
       try {
         const res = await fetch('/api/orders', {
@@ -216,6 +273,28 @@
      // 🔒 FIX วันที่เป็นวันนี้
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('orderDate').value = today;
+
+  document.querySelectorAll('.option-group').forEach(group => {
+const inputId =
+  group.dataset.name === 'channel' ? 'channelInput'
+  : group.dataset.name === 'mat_type' ? 'matTypeInput'
+  : group.dataset.name === 'set_type' ? 'setTypeInput'
+  : 'paymentInput';
+
+
+  const hiddenInput = document.getElementById(inputId);
+
+  group.querySelectorAll('.option-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      group.querySelectorAll('.option-btn')
+        .forEach(b => b.classList.remove('active'));
+
+      btn.classList.add('active');
+      hiddenInput.value = btn.dataset.value;
+    });
+  });
+});
+
   </script>
 
 </body>

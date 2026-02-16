@@ -20,6 +20,7 @@ body {
   padding: 0 20px;
 }
 
+/* ===== TOP BAR ===== */
 .top-bar {
   display: flex;
   justify-content: flex-end;
@@ -39,6 +40,7 @@ body {
 
 .top-bar button:hover { opacity: .85; }
 
+/* ===== CARD ===== */
 .card {
   background: #fff;
   border-radius: 14px;
@@ -52,6 +54,7 @@ h1 {
   font-size: 28px;
 }
 
+/* ===== TOOLBAR ===== */
 .toolbar {
   display: flex;
   justify-content: space-between;
@@ -86,6 +89,12 @@ h1 {
   color: #fff;
 }
 
+.btn-out:disabled {
+  background: #999;
+  cursor: not-allowed;
+}
+
+/* ===== TABLE ===== */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -105,6 +114,7 @@ th, td {
   white-space: nowrap;
 }
 
+/* ===== MODAL ===== */
 .modal {
   position: fixed;
   inset: 0;
@@ -121,6 +131,35 @@ th, td {
   width: 360px;
   border-radius: 12px;
 }
+
+.modal-box h3 {
+  margin: 0 0 14px;
+  text-align: center;
+}
+
+.modal-box input,
+.modal-box select {
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.logo-img {
+  width: 1000px;      /* ปรับตรงนี้ */
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto 20px;
+}
+
 </style>
 </head>
 
@@ -132,7 +171,8 @@ th, td {
     <button onclick="location.href='index.html'">กลับหน้าแรก</button>
     <button onclick="logout()">Log out</button>
   </div>
-
+ <!-- LOGO -->
+  <img src="images/logo.png" class="logo-img" alt="QUARK Logo">
   <div class="card">
 
     <h1>สต็อกสินค้า</h1>
@@ -165,9 +205,37 @@ th, td {
   </div>
 </div>
 
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <h3>เพิ่มสต็อก</h3>
+
+    <input id="car_model" placeholder="รุ่นรถ">
+    <input id="car_year" placeholder="ปีรถ">
+
+    <select id="mat_type">
+      <option value="">ประเภทพรม</option>
+      <option>พรม6D</option>
+      <option>พรมกระดุม</option>
+      <option>พรมVIP</option>
+      <option>พรมดักฝุ่น</option>
+    </select>
+
+    <input id="mat_color" placeholder="สีพรม">
+    <input id="mat_qty" type="number" min="1" placeholder="จำนวน">
+    <input id="note" placeholder="หมายเหตุ">
+
+    <div class="modal-actions">
+      <button class="btn btn-add" onclick="saveStock()">บันทึก</button>
+      <button class="btn" onclick="closeModal()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let allStock = [];
 
+/* ===== COMMON ===== */
 async function authFetch(url, options = {}) {
   options.headers = { 'Content-Type': 'application/json' };
   const res = await fetch(url, options);
@@ -175,23 +243,30 @@ async function authFetch(url, options = {}) {
   return res;
 }
 
-function logout() {
-  localStorage.clear();
-  location.href = '/login.html';
+async function logout() {
+  await fetch('/api/logout', {
+    method: 'POST',
+    credentials: 'include'
+  });
+  location.href = 'login.html';
 }
+
 
 function formatDate(d) {
   if (!d) return '-';
   return new Date(d).toLocaleDateString('th-TH');
 }
 
+/* ===== LOAD ===== */
 async function loadStock() {
   const res = await authFetch('/api/stock');
   const rows = await res.json();
-  allStock = rows.filter(s => s.status !== 'out');
+
+  allStock = rows; // ✅ แก้: ไม่กรอง out
   applySearch();
 }
 
+/* ===== SEARCH ===== */
 function applySearch() {
   const q = searchInput.value.toLowerCase();
   const list = allStock.filter(s =>
@@ -200,6 +275,7 @@ function applySearch() {
   renderTable(list);
 }
 
+/* ===== RENDER ===== */
 function renderTable(list) {
   const body = document.getElementById('stockBody');
   body.innerHTML = '';
@@ -209,31 +285,70 @@ function renderTable(list) {
     return;
   }
 
-  list.forEach(s => {
+  list.forEach((s, i) => {
     body.innerHTML += `
       <tr>
-        <td>${s.id}</td>
+        <td>${i + 1}</td>
         <td>${s.car_model || ''}</td>
         <td>${s.car_year || ''}</td>
         <td>${s.mat_type || ''}</td>
         <td>${s.mat_color || ''}</td>
-        <td>${formatDate(s.stock_in_date)}</td>
+        <td>${formatDate(s.stock_in_date || s.created_at)}</td>
         <td>${formatDate(s.stock_out_date)}</td>
         <td>
-          <button class="btn btn-out" onclick="cutStock(${s.id})">ตัดสต็อก</button>
+          <button
+            class="btn btn-out"
+            onclick="cutStock(${s.id}, this)"
+            ${s.stock_out_date ? 'disabled' : ''}
+          >
+            ${s.stock_out_date ? 'ตัดสต็อกแล้ว' : 'ตัดสต็อก'}
+          </button>
         </td>
       </tr>
     `;
   });
 }
 
-async function cutStock(id) {
-  if (!confirm('ยืนยันตัดสต็อก?')) return;
-  await authFetch('/api/stock/' + id + '/out', { method: 'PATCH' });
+/* ===== ACTIONS ===== */
+function openModal() { modal.style.display = 'flex'; }
+function closeModal() { modal.style.display = 'none'; }
+
+async function saveStock() {
+  const data = {
+    car_model: car_model.value.trim(),
+    car_year: car_year.value.trim(),
+    mat_type: mat_type.value,
+    mat_color: mat_color.value.trim(),
+    mat_qty: Number(mat_qty.value) || 1,
+    note: note.value.trim()
+  };
+
+  await authFetch('/api/stock', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+
+  closeModal();
   loadStock();
 }
 
+async function cutStock(id, btn) {
+  if (!confirm('ยืนยันตัดสต็อก?')) return;
+
+  btn.disabled = true;
+  btn.textContent = 'ตัดสต็อกแล้ว';
+
+  await authFetch('/api/stock/' + id + '/out', {
+    method: 'PATCH'
+  });
+
+  loadStock();
+}
+
+/* ===== EVENTS ===== */
 searchInput.oninput = applySearch;
+
+/* INIT */
 loadStock();
 </script>
 

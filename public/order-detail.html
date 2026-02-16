@@ -13,30 +13,51 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f5f5f5;
+  background: #f2f2f2;
 }
 
-header {
-  background: #fff;
-  border-bottom: 1px solid #ddd;
-  padding: 14px 20px;
-  font-size: 18px;
-  font-weight: bold;
-}
-
-.container {
-  max-width: 700px;
-  margin: 20px auto;
+.page {
+  max-width: 900px;
+  margin: 30px auto;
   padding: 0 20px;
 }
 
-.card {
-  background: #fff;
-  border: 1px solid #ddd;
-  padding: 20px;
-  margin-bottom: 20px;
+/* ===== TOP BAR ===== */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
+.top-bar button {
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 8px;
+  border: none;
+  background: #000;
+  color: #fff;
+  cursor: pointer;
+}
+
+.top-bar button:hover { opacity: .85; }
+
+/* ===== CARD ===== */
+.card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 18px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.05);
+}
+
+h1 {
+  text-align: center;
+  margin: 10px 0 25px;
+  font-size: 28px;
+}
+
+/* ===== INFO ROW ===== */
 .row {
   display: flex;
   justify-content: space-between;
@@ -44,57 +65,82 @@ header {
   font-size: 14px;
 }
 
-.label {
-  color: #666;
-}
-
-.value {
-  font-weight: bold;
-}
+.label { color: #666; }
+.value { font-weight: bold; }
 
 .status {
   font-size: 16px;
 }
 
+/* ===== STATUS BUTTONS ===== */
 .status-buttons {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin-top: 10px;
+  margin-top: 14px;
 }
 
-button {
+.btn {
+  border: none;
+  border-radius: 8px;
   padding: 8px 14px;
   font-size: 13px;
-  border: 1px solid #aaa;
-  background: #fff;
   cursor: pointer;
 }
+
+.btn-dark {
+  background: #000;
+  color: #fff;
+}
+
+.btn-light {
+  background: #fff;
+  border: 1px solid #ddd;
+}
+
+.btn-light:hover { background: #eee; }
 
 button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-button:hover:not(:disabled) {
-  background: #eee;
+/* ===== QR ===== */
+#qrcode {
+  margin-top: 12px;
+  text-align: center;
 }
 
-#qrcode {
-  margin-top: 10px;
+/* ===== LOGO ===== */
+.logo-img {
+  width: 1000px;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto 20px;
 }
 </style>
 </head>
 
 <body>
 
-<header>QUARK – รายละเอียดออเดอร์</header>
+<div class="page">
 
-<div class="container">
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <button onclick="logout()">Log out</button>
+  </div>
 
-  <!-- ORDER INFO -->
-  <div class="card" id="orderInfo">
-    กำลังโหลดข้อมูล...
+  <!-- LOGO -->
+  <img src="images/logo.png" class="logo-img" alt="QUARK Logo">
+
+  <div class="card">
+    <h1>รายละเอียดออเดอร์</h1>
+
+    <!-- ORDER INFO -->
+    <div id="orderInfo">
+      กำลังโหลดข้อมูล...
+    </div>
   </div>
 
   <!-- STATUS -->
@@ -116,8 +162,27 @@ button:hover:not(:disabled) {
 </div>
 
 <script>
-const STATUS_FLOW = ['ตัด','ประกบ','กุ๊น','QC','ส่งออก','ยกเลิก'];
+/* ===== PRODUCTION FLOW ===== */
+const STATUS_LABEL = {
+  'สั่งงาน': 'ORDERED',
+  'ตัด': 'Cutting',
+  'ประกบ': 'SEWING 1',
+  'กุ๊น': 'SEWING 2',
+  'QC': 'QC',
+  'ส่งออก': 'Shipped',
+  'เข้าสต็อก': 'In Stock'
+};
+
 const id = new URLSearchParams(location.search).get('id');
+
+function goBack() {
+  location.href = '/index.html';
+}
+
+function logout() {
+  localStorage.clear();
+  location.href = '/login.html';
+}
 
 async function authFetch(url, options = {}) {
   options.headers = { 'Content-Type': 'application/json' };
@@ -131,19 +196,22 @@ async function loadOrder() {
   const o = await res.json();
 
   document.getElementById('orderInfo').innerHTML = `
-    <div class="row"><div class="label">Order #</div><div class="value">${o.id}</div></div>
+    <div class="row"><div class="label">Order #</div><div class="value">${o.order_no || o.id}</div></div>
+    <div class="row"><div class="label">ประเภทพรม</div><div class="value">${o.mat_type || ''}</div></div>
     <div class="row"><div class="label">รุ่นรถ</div><div class="value">${o.car_model || ''}</div></div>
     <div class="row"><div class="label">ปีรถ</div><div class="value">${o.car_year || ''}</div></div>
-    <div class="row"><div class="label">ประเภทพรม</div><div class="value">${o.mat_type || ''}</div></div>
     <div class="row"><div class="label">สีพรม</div><div class="value">${o.mat_color || ''}</div></div>
+    <div class="row"><div class="label">รูปแบบชุดพรม</div><div class="value">${o.set_type || '-'}</div></div>
     <div class="row"><div class="label">จำนวน</div><div class="value">${o.mat_qty || ''}</div></div>
     <div class="row"><div class="label">ลูกค้า</div><div class="value">${o.customer || ''}</div></div>
     <div class="row"><div class="label">หมายเหตุ</div><div class="value">${o.note || '-'}</div></div>
   `;
 
-  document.getElementById('currentStatus').innerText = o.status;
+  const currentStatus = o.production_status || 'สั่งงาน';
+  document.getElementById('currentStatus').innerText =
+  STATUS_LABEL[currentStatus] || currentStatus;
 
-  renderStatusButtons(o.status);
+  renderStatusButtons(currentStatus);
   renderQR(o.id);
 }
 
@@ -155,12 +223,11 @@ function renderStatusButtons(current) {
 
   STATUS_FLOW.forEach((s, i) => {
     const btn = document.createElement('button');
-    btn.innerText = s;
+    btn.innerText = STATUS_LABEL[s] || s;
+    btn.className = i === currentIndex + 1 ? 'btn btn-dark' : 'btn btn-light';
 
     if (s === current) {
       btn.disabled = true;
-    } else if (s === 'ยกเลิก') {
-      btn.disabled = false;
     } else {
       btn.disabled = i !== currentIndex + 1;
     }
@@ -173,15 +240,18 @@ function renderStatusButtons(current) {
 async function updateStatus(status) {
   if (!confirm('เปลี่ยนสถานะเป็น "' + status + '" ?')) return;
 
-  const res = await authFetch('/api/orders/' + id + '/status', {
-    method: 'PUT',
-    body: JSON.stringify({ status })
-  });
+  const res = await authFetch(
+    '/api/orders/' + id + '/production-status',
+    {
+      method: 'PUT',
+      body: JSON.stringify({ production_status: status })
+    }
+  );
 
   if (res.ok) {
     loadOrder();
   } else {
-    alert('เปลี่ยนสถานะไม่สำเร็จ');
+    alert('ไม่สามารถเปลี่ยนสถานะได้');
   }
 }
 

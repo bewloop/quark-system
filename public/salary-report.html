@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Salary Report</title>
+<style>
+body { font-family: Arial; padding:20px; max-width:800px; margin:auto;}
+table { width:100%; border-collapse:collapse; margin-top:20px;}
+th,td { border:1px solid #ccc; padding:8px; text-align:left;}
+.total { font-size:20px; font-weight:bold; margin-top:15px;}
+</style>
+</head>
+<body>
+
+<h2>สรุปเงินเดือนรายเดือน</h2>
+
+<input type="month" id="period">
+<button onclick="load()">ดูข้อมูล</button>
+
+<table>
+<thead>
+<tr>
+<th>ชื่อ</th>
+<th>ตำแหน่ง</th>
+<th>ยอดสุทธิ</th>
+</tr>
+</thead>
+<tbody id="table"></tbody>
+</table>
+
+<div class="total" id="sum"></div>
+
+<script>
+async function load(){
+
+  const period = document.getElementById('period').value;
+
+  const res = await fetch('/api/payroll?period='+period);
+  const data = await res.json();
+
+  let totalSum = 0;
+  const table = document.getElementById('table');
+  table.innerHTML = '';
+
+  data.forEach(row=>{
+    totalSum += row.total;
+
+    table.innerHTML += `
+      <tr>
+        <td>${row.name}</td>
+        <td>${row.position}</td>
+        <td>${row.total.toLocaleString()}</td>
+      </tr>
+    `;
+  });
+
+  document.getElementById('sum').innerText =
+    "รวมทั้งเดือน: " + totalSum.toLocaleString() + " บาท";
+}
+</script>
+
+</body>
+</html>

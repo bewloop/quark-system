@@ -2,134 +2,217 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Performance | QUARK</title>
+<title>Staff Performance | QUARK</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+* { box-sizing: border-box; }
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f5f5f5;
+  background: #f2f2f2;
 }
 
-.top-actions {
-  position: fixed;
-  top: 16px;
-  left: 16px;
-  right: 16px;
+.page {
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+/* ===== TOP BAR ===== */
+.top-bar {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
-.top-actions button {
-  padding: 8px 14px;
-  border-radius: 6px;
+.top-bar button {
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 8px;
   border: none;
   background: #000;
   color: #fff;
   cursor: pointer;
 }
 
-.container {
-  max-width: 1100px;
-  margin: 90px auto 40px;
-  background: #fff;
-  padding: 28px;
-  border-radius: 12px;
+.top-bar button:hover { opacity: .85; }
+
+/* ===== LOGO ===== */
+.logo-img {
+  width: 1000px;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto 20px;
 }
 
-h2 {
-  margin-top: 0;
+/* ===== CARD ===== */
+.card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.05);
+}
+
+h1 {
   text-align: center;
+  margin: 10px 0 25px;
+  font-size: 28px;
+}
+
+/* ===== TOOLBAR ===== */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
 }
 
 .filters {
   display: flex;
   gap: 12px;
-  margin-bottom: 20px;
   align-items: center;
   flex-wrap: wrap;
 }
 
-.filters input,
-.filters button {
-  padding: 8px 12px;
-  font-size: 14px;
+.filters label {
+  font-size: 13px;
 }
 
-.filters button {
-  background: #111;
-  color: #fff;
-  border-radius: 6px;
+.filters input {
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+/* ===== BUTTON ===== */
+.btn {
   border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
   cursor: pointer;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-}
-
-th, td {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-  text-align: center;
-}
-
-th {
+.btn-load {
   background: #000;
   color: #fff;
 }
 
+/* ===== TABLE ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+thead tr { background: #000; }
+
+thead th {
+  color: #fff;
+  font-weight: bold;
+}
+
+th, td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ===== SUMMARY ===== */
 .summary {
   margin-top: 20px;
   font-size: 14px;
+  text-align: right;
 }
+
+.detail-row {
+  display: none;
+  background: #fafafa;
+}
+
+.detail-box {
+  text-align: left;
+  padding: 15px 20px;
+  font-size: 12px;
+}
+
+.detail-item {
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.detail-item a {
+  color: #000;
+  text-decoration: underline;
+}
+
 </style>
 </head>
 
 <body>
 
-<div class="top-actions">
-  <button onclick="location.href='index.html'">← กลับหน้าแรก</button>
-  <button onclick="logout()">Logout</button>
-</div>
+<div class="page">
 
-<div class="container">
-
-  <h2>📊 Performance Staff</h2>
-
-  <div class="filters">
-    <label>จากวันที่:
-      <input type="date" id="from">
-    </label>
-
-    <label>ถึงวันที่:
-      <input type="date" id="to">
-    </label>
-
-    <button onclick="loadPerformance()">โหลดข้อมูล</button>
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <button onclick="location.href='index.html'">กลับหน้าแรก</button>
+    <button onclick="logout()">Log out</button>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>พนักงาน</th>
-        <th>ตัด</th>
-        <th>ประกบ</th>
-        <th>กุ๊น</th>
-        <th>QC</th>
-        <th>ค่าแรง (บาท)</th>
-      </tr>
-    </thead>
-    <tbody id="rows">
-      <tr><td colspan="6">เลือกช่วงวันที่</td></tr>
-    </tbody>
-  </table>
+  <!-- LOGO -->
+  <img src="images/logo.png" class="logo-img" alt="QUARK Logo">
 
-  <div class="summary" id="summary"></div>
+  <!-- CARD -->
+  <div class="card">
 
+    <h1>Performance Staff</h1>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <div class="filters">
+        <label>
+          จากวันที่
+          <input type="date" id="from">
+        </label>
+
+        <label>
+          ถึงวันที่
+          <input type="date" id="to">
+        </label>
+      </div>
+
+      <button class="btn btn-load" onclick="loadPerformance()">โหลดข้อมูล</button>
+    </div>
+
+    <!-- TABLE -->
+    <table>
+      <thead>
+        <tr>
+          <th>พนักงาน</th>
+          <th>ตัด</th>
+          <th>ประกบ</th>
+          <th>กุ๊น</th>
+          <th>QC</th>
+          <th>ค่าแรง (บาท)</th>
+        </tr>
+      </thead>
+      <tbody id="rows">
+        <tr><td colspan="6">เลือกช่วงวันที่</td></tr>
+      </tbody>
+    </table>
+
+    <!-- SUMMARY -->
+    <div class="summary" id="summary"></div>
+
+  </div>
 </div>
 
 <script>
@@ -163,46 +246,111 @@ async function loadPerformance() {
   tbody.innerHTML = `<tr><td colspan="6">กำลังโหลด...</td></tr>`;
   summary.innerHTML = '';
 
-  const res = await authFetch(`/api/admin/performance?from=${from}&to=${to}`);
-  const data = await res.json();
+  try {
+    // โหลด summary + detail พร้อมกัน
+    const [summaryRes, detailRes] = await Promise.all([
+      authFetch(`/api/admin/performance-summary?from=${from}&to=${to}`),
+      authFetch(`/api/admin/performance-detail?from=${from}&to=${to}`)
+    ]);
 
-  if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="6">ไม่พบข้อมูล</td></tr>`;
+    const data = await summaryRes.json();
+    const detailData = await detailRes.json();
+
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="6">ไม่พบข้อมูล</td></tr>`;
+      return;
+    }
+
+    let total = 0;
+    tbody.innerHTML = '';
+
+    for (const s of data) {
+
+      const wage =
+        (s.cut || 0) * RATE.cut +
+        (s.assemble || 0) * RATE.assemble +
+        (s.sew || 0) * RATE.sew +
+        (s.qc || 0) * RATE.qc;
+
+      total += wage;
+
+      const detailId = "detail_" + s.staff;
+
+      tbody.innerHTML += `
+        <tr onclick="toggleDetail('${detailId}')" style="cursor:pointer;">
+          <td><strong>${s.staff}</strong> ▼</td>
+          <td>${s.cut || 0}</td>
+          <td>${s.assemble || 0}</td>
+          <td>${s.sew || 0}</td>
+          <td>${s.qc || 0}</td>
+          <td>${wage.toLocaleString()}</td>
+        </tr>
+
+        <tr id="${detailId}" class="detail-row">
+          <td colspan="6">
+            <div class="detail-box" id="box_${s.staff}">
+            </div>
+          </td>
+        </tr>
+      `;
+
+      renderDetail(s.staff, detailData);
+    }
+
+    summary.innerHTML =
+      `ค่าแรงรวมทั้งหมด: <strong>${total.toLocaleString()} บาท</strong>`;
+
+  } catch (err) {
+    console.error(err);
+    tbody.innerHTML = `<tr><td colspan="6">เกิดข้อผิดพลาด</td></tr>`;
+  }
+}
+
+function renderDetail(staff, data) {
+
+  const box = document.getElementById("box_" + staff);
+  const staffItems = data.filter(d => d.username === staff);
+
+  if (!staffItems.length) {
+    box.innerHTML = 'ไม่มีรายละเอียด';
     return;
   }
 
-  let total = 0;
-  tbody.innerHTML = '';
+  box.innerHTML = '';
 
-  data.forEach(s => {
-    const wage =
-      (s.cut || 0) * RATE.cut +
-      (s.assemble || 0) * RATE.assemble +
-      (s.sew || 0) * RATE.sew +
-      (s.qc || 0) * RATE.qc;
-
-    total += wage;
-
-    tbody.innerHTML += `
-      <tr>
-        <td><strong>${s.staff}</strong></td>
-        <td>${s.cut || 0}</td>
-        <td>${s.assemble || 0}</td>
-        <td>${s.sew || 0}</td>
-        <td>${s.qc || 0}</td>
-        <td>${wage.toLocaleString()}</td>
-      </tr>
+  staffItems.forEach(d => {
+    box.innerHTML += `
+      <div class="detail-item">
+        ${new Date(d.created_at).toLocaleString()} |
+        ${d.status} |
+        <a href="/order-details.html?id=${d.order_id}"
+           onclick="event.stopPropagation()">
+          ${d.order_no}
+        </a>
+        (${d.car_model} ${d.car_year})
+      </div>
     `;
   });
-
-  summary.innerHTML =
-    `💰 ค่าแรงรวมทั้งหมด: <strong>${total.toLocaleString()} บาท</strong>`;
 }
+
+function toggleDetail(id) {
+  const row = document.getElementById(id);
+
+  if (!row) return;
+
+  row.style.display =
+    row.style.display === 'table-row' ? 'none' : 'table-row';
+}
+
 
 async function logout() {
-  await fetch('/api/logout', { method: 'POST' });
+  await fetch('/api/logout', {
+    method: 'POST',
+    credentials: 'include'
+  });
   location.href = 'login.html';
 }
+
 
 /* ตั้งค่าวันวันนี้อัตโนมัติ */
 const today = new Date().toISOString().slice(0,10);
