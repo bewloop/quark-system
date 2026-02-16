@@ -5,6 +5,7 @@ const { Pool } = require('pg');
 const path = require('path');
 const customerRoutes = require('./server/routes/customers');
 const invoiceRoutes = require('./server/routes/invoices');
+const payrollRoutes = require('./server/routes/payroll');
 
 
 const app = express();
@@ -99,6 +100,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/api/customers', customerRoutes);
 app.use('/api/invoices', invoiceRoutes);
+app.use('/api/payroll', payrollRoutes);
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'quark-secret',
