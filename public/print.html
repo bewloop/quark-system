@@ -102,13 +102,13 @@ button:hover { background: #eee; }
 
 /* QR */
 .barcode {
-  width: 72px;
-  height: 72px;
+  width: 100px;
+  height: 100px;
 }
 
 .barcode div {
-  width: 70px;
-  height: 70px;
+  width: 100px;
+  height: 100px;
 }
 
 /* Section */
@@ -190,8 +190,8 @@ function renderOrder(o, idx) {
     if (el) {
       new QRCode(el, {
         text: `${location.origin}/order-detail.html?id=${o.id}`,
-        width: 70,
-        height: 70
+        width: 100,
+        height: 100
       });
     }
   });

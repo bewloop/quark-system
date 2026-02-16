@@ -71,6 +71,11 @@ async function initDB() {
     )
   `);
 
+  await pool.query(`
+  ALTER TABLE stock
+  ADD COLUMN IF NOT EXISTS stock_out_date TIMESTAMP
+`);
+
    await pool.query(`
   ALTER TABLE orders
   ADD COLUMN IF NOT EXISTS set_type TEXT
@@ -414,6 +419,29 @@ app.post('/api/stock', auth(['admin','quarkmgr']), async (req, res) => {
   res.json({ ok: true });
 });
 
+app.patch('/api/stock/:id/out', auth(['admin','quarkmgr']), async (req, res) => {
+  const { id } = req.params;
+
+  await pool.query(
+    'UPDATE stock SET stock_out_date = NOW() WHERE id = $1',
+    [id]
+  );
+
+  res.json({ ok: true });
+});
+
+app.delete('/api/stock/:id', auth(['admin']), async (req, res) => {
+  const { id } = req.params;
+
+  await pool.query(
+    'DELETE FROM stock WHERE id = $1',
+    [id]
+  );
+
+  res.json({ ok: true });
+});
+
+
 /* ================= PERFORMANCE (ADMIN ONLY) ================= */
 
 app.get('/api/admin/performance-summary', auth(['admin']), async (req, res) => {
@@ -482,6 +510,30 @@ app.post('/api/users', auth(['admin']), async (req, res) => {
   );
   res.json({ ok: true });
 });
+
+// ลบผู้ใช้ (admin เท่านั้น)
+app.delete('/api/users/:id', auth(['admin']), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // ป้องกันลบตัวเอง
+    if (req.session.user.id == id) {
+      return res.status(400).json({ error: 'cannot delete yourself' });
+    }
+
+    await pool.query(
+      'DELETE FROM users WHERE id = $1',
+      [id]
+    );
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('DELETE USER ERROR:', err);
+    res.status(500).json({ error: 'delete failed' });
+  }
+});
+
+
 
 /* ================= START ================= */
 

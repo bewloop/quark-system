@@ -163,12 +163,22 @@ button:disabled {
 
 <script>
 /* ===== PRODUCTION FLOW ===== */
+const STATUS_FLOW = [
+  'สั่งงาน',
+  'ตัด',
+  'ประกบ',
+  'กุ๊น',
+  'QC',
+  'ส่งออก',
+  'เข้าสต็อก'
+];
+
 const STATUS_LABEL = {
-  'สั่งงาน': 'ORDERED',
+  'สั่งงาน': 'Ordered',
   'ตัด': 'Cutting',
-  'ประกบ': 'SEWING 1',
-  'กุ๊น': 'SEWING 2',
-  'QC': 'QC',
+  'ประกบ': 'Sewing 1',
+  'กุ๊น': 'Sewing 2',
+  'QC': 'Quality Check',
   'ส่งออก': 'Shipped',
   'เข้าสต็อก': 'In Stock'
 };
@@ -197,9 +207,9 @@ async function loadOrder() {
 
   document.getElementById('orderInfo').innerHTML = `
     <div class="row"><div class="label">Order #</div><div class="value">${o.order_no || o.id}</div></div>
-    <div class="row"><div class="label">ประเภทพรม</div><div class="value">${o.mat_type || ''}</div></div>
     <div class="row"><div class="label">รุ่นรถ</div><div class="value">${o.car_model || ''}</div></div>
     <div class="row"><div class="label">ปีรถ</div><div class="value">${o.car_year || ''}</div></div>
+    <div class="row"><div class="label">ประเภทพรม</div><div class="value">${o.mat_type || ''}</div></div>
     <div class="row"><div class="label">สีพรม</div><div class="value">${o.mat_color || ''}</div></div>
     <div class="row"><div class="label">รูปแบบชุดพรม</div><div class="value">${o.set_type || '-'}</div></div>
     <div class="row"><div class="label">จำนวน</div><div class="value">${o.mat_qty || ''}</div></div>
@@ -210,6 +220,7 @@ async function loadOrder() {
   const currentStatus = o.production_status || 'สั่งงาน';
   document.getElementById('currentStatus').innerText =
   STATUS_LABEL[currentStatus] || currentStatus;
+
 
   renderStatusButtons(currentStatus);
   renderQR(o.id);
@@ -224,6 +235,7 @@ function renderStatusButtons(current) {
   STATUS_FLOW.forEach((s, i) => {
     const btn = document.createElement('button');
     btn.innerText = STATUS_LABEL[s] || s;
+
     btn.className = i === currentIndex + 1 ? 'btn btn-dark' : 'btn btn-light';
 
     if (s === current) {

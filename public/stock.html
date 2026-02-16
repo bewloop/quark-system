@@ -296,14 +296,23 @@ function renderTable(list) {
         <td>${formatDate(s.stock_in_date || s.created_at)}</td>
         <td>${formatDate(s.stock_out_date)}</td>
         <td>
-          <button
-            class="btn btn-out"
-            onclick="cutStock(${s.id}, this)"
-            ${s.stock_out_date ? 'disabled' : ''}
-          >
-            ${s.stock_out_date ? 'ตัดสต็อกแล้ว' : 'ตัดสต็อก'}
-          </button>
-        </td>
+  <button
+    class="btn btn-out"
+    onclick="cutStock(${s.id}, this)"
+    ${s.stock_out_date ? 'disabled' : ''}
+  >
+    ${s.stock_out_date ? 'ตัดสต็อกแล้ว' : 'ตัดสต็อก'}
+  </button>
+
+  <button
+    class="btn"
+    style="background:#444;color:#fff;margin-left:6px;"
+    onclick="deleteStock(${s.id})"
+  >
+    ลบ
+  </button>
+</td>
+
       </tr>
     `;
   });
@@ -344,6 +353,17 @@ async function cutStock(id, btn) {
 
   loadStock();
 }
+
+async function deleteStock(id) {
+  if (!confirm('ยืนยันลบรายการนี้?')) return;
+
+  await authFetch('/api/stock/' + id, {
+    method: 'DELETE'
+  });
+
+  loadStock();
+}
+
 
 /* ===== EVENTS ===== */
 searchInput.oninput = applySearch;

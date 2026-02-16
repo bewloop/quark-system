@@ -203,7 +203,7 @@ th, td {
       </div>
 
       <div class="actions-top">
-        <button class="btn btn-add" onclick="newOrder()">➕ New Order</button>
+        <button id="btnNewOrder" class="btn btn-add" onclick="newOrder()">➕ New Order</button>
         <button class="btn btn-edit" onclick="editSelected()">✏️ แก้ไข</button>
         <button class="btn btn-print" onclick="printSummary()">🧾 ใบสรุปรายการ</button>
         <button class="btn btn-print" onclick="printSelected()">🖨 พิมพ์ใบสั่งงาน</button>
@@ -297,6 +297,10 @@ async function loadMe() {
   if (currentUserRole !== 'admin') {
     document.getElementById('deleteBtn').style.display = 'none';
   }
+  if (currentUserRole === 'staff') {
+  document.getElementById('btnNewOrder').style.display = 'none';
+}
+
 }
 
 /* ===== LOAD ORDERS ===== */
