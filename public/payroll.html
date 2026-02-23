@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Payroll | QUARK</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f4f4f4;
+}
+
+.header {
+  background: #000;
+  color: #fff;
+  padding: 16px 24px;
+  font-size: 18px;
+}
+
+.container {
+  padding: 24px;
+}
+
+.card {
+  background: #fff;
+  padding: 16px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
+
+.card.locked {
+  opacity: 0.6;
+}
+
+input, select {
+  padding: 10px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+button {
+  padding: 12px;
+  background: #000;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.hidden {
+  display: none;
+}
+
+.total-box {
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 10px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">QUARK Payroll</div>
+
+<div class="container">
+
+  <!-- PERIOD LIST -->
+  <div id="periodSection">
+    <h3>รอบเงินเดือน</h3>
+    <div id="periodList"></div>
+  </div>
+
+  <!-- STAFF LIST -->
+  <div id="staffSection" class="hidden">
+    <h3>เลือกพนักงาน</h3>
+    <div id="staffList"></div>
+  </div>
+
+  <!-- PAYROLL FORM -->
+  <div id="formSection" class="hidden">
+    <h3>คำนวณเงินเดือน</h3>
+
+    <label>ประเภทค่าแรง</label>
+    <select id="payType" onchange="toggleType()">
+      <option value="daily">ค่าแรงรายวัน</option>
+      <option value="piece">ค่าแรงรายชุด</option>
+    </select>
+
+    <!-- DAILY -->
+    <div id="dailyBox">
+      <input id="dailyRate" type="number" placeholder="ค่าแรงต่อวัน">
+      <input id="workDays" type="number" placeholder="จำนวนวันทำงาน">
+    </div>
+
+    <!-- PIECE -->
+    <div id="pieceBox" class="hidden">
+      <input id="pieceCount" type="number" placeholder="จำนวนชุด">
+    </div>
+
+    <input id="otHours" type="number" placeholder="OT ชั่วโมงรวม">
+    <input id="bonus" type="number" placeholder="โบนัส">
+    <input id="deduction" type="number" placeholder="หักเงิน">
+    <input id="note" placeholder="หมายเหตุ">
+
+    <div class="total-box">
+      รวมทั้งสิ้น: <span id="totalDisplay">0</span> บาท
+    </div>
+
+    <button onclick="savePayroll()">บันทึก</button>
+  </div>
+
+</div>
+
+<script>
+let selectedPeriod = null;
+let selectedUser = null;
+let existingPayroll = null;
+
+// =======================
+// FORMAT MONEY
+// =======================
+function formatMoney(num) {
+  return Number(num || 0).toLocaleString();
+}
+
+// =======================
+// LOAD PERIODS
+// =======================
+async function loadPeriods() {
+  const res = await fetch('/api/payroll/periods');
+  const periods = await res.json();
+
+  const list = document.getElementById('periodList');
+  list.innerHTML = '';
+
+  periods.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'card' + (p.is_locked ? ' locked' : '');
+    div.innerHTML = `
+      <b>${p.start_date} - ${p.end_date}</b>
+      ${p.is_locked ? '<span style="color:red"> (LOCKED)</span>' : ''}
+    `;
+    div.onclick = () => selectPeriod(p);
+    list.appendChild(div);
+  });
+}
+
+// =======================
+// SELECT PERIOD
+// =======================
+function selectPeriod(period) {
+  selectedPeriod = period;
+  existingPayroll = null;
+
+  document.getElementById('staffSection').classList.remove('hidden');
+  document.getElementById('formSection').classList.add('hidden');
+
+  loadStaff();
+}
+
+// =======================
+// LOAD STAFF
+// =======================
+async function loadStaff() {
+  const res = await fetch(`/api/payroll/staff?period_id=${selectedPeriod.id}`);
+  const staff = await res.json();
+
+  const list = document.getElementById('staffList');
+  list.innerHTML = '';
+
+  staff.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'card';
+
+    if (s.has_payroll) {
+      div.innerHTML = `
+        ${s.username}
+        <span style="float:right;color:green">
+          ✔ ${formatMoney(s.total)} บาท
+        </span>
+      `;
+    } else {
+      div.innerText = s.username;
+    }
+
+    div.onclick = () => selectUser(s);
+    list.appendChild(div);
+  });
+}
+
+// =======================
+// SELECT USER
+// =======================
+async function selectUser(user) {
+  if (selectedPeriod.is_locked) {
+    alert('รอบนี้ถูกล็อคแล้ว ไม่สามารถแก้ไขได้');
+    return;
+  }
+
+  selectedUser = user;
+
+  const res = await fetch(`/api/payroll/detail?period_id=${selectedPeriod.id}&user_id=${user.id}`);
+  const data = await res.json();
+
+  existingPayroll = data || null;
+
+  if (existingPayroll) {
+    payType.value = data.pay_type;
+    dailyRate.value = data.daily_rate || '';
+    workDays.value = data.work_days || '';
+    pieceCount.value = data.piece_count || '';
+    otHours.value = data.ot_hours || '';
+    bonus.value = data.bonus || '';
+    deduction.value = data.deduction || '';
+    note.value = data.note || '';
+  } else {
+    document.querySelectorAll('#formSection input').forEach(i => i.value = '');
+  }
+
+  toggleType();
+  calculateTotal();
+
+  document.getElementById('formSection').classList.remove('hidden');
+}
+
+// =======================
+// TOGGLE TYPE
+// =======================
+function toggleType() {
+  const type = payType.value;
+  dailyBox.classList.toggle('hidden', type !== 'daily');
+  pieceBox.classList.toggle('hidden', type !== 'piece');
+}
+
+// =======================
+// CALCULATE
+// =======================
+function calculateTotal() {
+  const type = payType.value;
+  let wage = 0;
+
+  if (type === 'daily') {
+    wage = (Number(dailyRate.value) || 0) *
+           (Number(workDays.value) || 0);
+  }
+
+  if (type === 'piece') {
+    const pieces = Number(pieceCount.value) || 0;
+
+    if (pieces <= 10) wage = pieces * 380;
+    else if (pieces <= 14) wage = pieces * 420;
+    else wage = (14 * 420) + ((pieces - 14) * 25);
+  }
+
+  const ot = (Number(otHours.value) || 0) * 60;
+  const total = wage + ot +
+    (Number(bonus.value) || 0) -
+    (Number(deduction.value) || 0);
+
+  totalDisplay.innerText = formatMoney(total);
+}
+
+document.addEventListener('input', calculateTotal);
+
+// =======================
+// SAVE
+// =======================
+async function savePayroll() {
+
+  if (selectedPeriod.is_locked) {
+    alert('รอบนี้ถูกล็อคแล้ว');
+    return;
+  }
+
+  const payload = {
+    period_id: selectedPeriod.id,
+    user_id: selectedUser.id,
+    pay_type: payType.value,
+    daily_rate: Number(dailyRate.value) || 0,
+    work_days: Number(workDays.value) || 0,
+    piece_count: Number(pieceCount.value) || 0,
+    ot_hours: Number(otHours.value) || 0,
+    bonus: Number(bonus.value) || 0,
+    deduction: Number(deduction.value) || 0,
+    note: note.value || ''
+  };
+
+  const res = await fetch('/api/payroll/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  if (!res.ok) {
+    alert('บันทึกไม่สำเร็จ');
+    return;
+  }
+
+  alert(existingPayroll ? 'อัปเดตสำเร็จ' : 'บันทึกสำเร็จ');
+
+  loadStaff();
+  document.getElementById('formSection').classList.add('hidden');
+}
+
+loadPeriods();
+</script>
+
+
+</body>
+</html>

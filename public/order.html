@@ -129,7 +129,7 @@ th, td {
   font-weight: bold;
 }
 
-.badge-pending { background: #95a5a6; color: #fff; }
+.badge-pending { background: #6a3e05; color: #fff; }
 .badge-paid { background: #2ecc71; color: #fff; }
 .badge-app { background: #3498db; color: #fff; }
 .badge-cod { background: #f39c12; color: #fff; }
@@ -142,12 +142,12 @@ th, td {
   cursor: pointer;
 }
 
-.badge-prod-order { background: #7f8c8d; color: #fff; }
-.badge-prod-cut { background: #34495e; color: #fff; }
-.badge-prod-join { background: #8e44ad; color: #fff; }
-.badge-prod-binding { background: #16a085; color: #fff; }
-.badge-prod-qc { background: #2980b9; color: #fff; }
-.badge-prod-ship { background: #2ecc71; color: #fff; }
+.badge-prod-order { background: #880cc6; color: #fff; }
+.badge-prod-cut { background: #0080ff; color: #fff; }
+.badge-prod-join { background: #e6601d; color: #fff; }
+.badge-prod-binding { background: #f6d500; color: #fff; }
+.badge-prod-qc { background: #e947b8; color: #fff; }
+.badge-prod-ship { background: #2bcb6e; color: #fff; }
 .badge-prod-cancel { background: #e74c3c; color: #fff; }
 
 .logo-img {
@@ -196,6 +196,7 @@ th, td {
           <option>กุ๊น</option>
           <option>QC</option>
           <option>ส่งออก</option>
+          <option>เข้าสต็อก</option>
           <option>ยกเลิก</option>
         </select>
 
@@ -284,6 +285,7 @@ function renderProductionBadge(s) {
     'กุ๊น': '<span class="badge badge-prod-binding">กุ๊น</span>',
     'QC': '<span class="badge badge-prod-qc">QC</span>',
     'ส่งออก': '<span class="badge badge-prod-ship">ส่งออก</span>',
+    'เข้าสต็อก': '<span class="badge badge-prod-ship">เข้าสต็อก</span>',
     'ยกเลิก': '<span class="badge badge-prod-cancel">ยกเลิก</span>'
   }[s] || '<span class="badge badge-prod-order">สั่งงาน</span>';
 }
@@ -328,7 +330,7 @@ function applyFilter() {
 
   const list = allOrders.filter(o => {
     if (pay && o.payment_status !== pay) return false;
-    if (status && o.status !== status) return false;
+    if (status && o.production_status !== status) return false;
     if (date && o.created_at?.slice(0,10) !== date) return false;
     return true;
   });

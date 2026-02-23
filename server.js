@@ -88,6 +88,15 @@ async function initDB() {
     ON CONFLICT (username) DO NOTHING
   `);
 
+  await pool.query(`
+  CREATE TABLE IF NOT EXISTS employees (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    salary INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
   console.log('✅ DB initialized');
 }
 
@@ -98,28 +107,31 @@ app.set('trust proxy', 1);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use('/api/customers', customerRoutes);
-app.use('/api/invoices', invoiceRoutes);
-app.use('/api/payroll', payrollRoutes);
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'quark-secret',
   resave: false,
   saveUninitialized: false,
+  proxy: true,
   cookie: {
     secure: true,
     httpOnly: true,
-    sameSite: 'none',
+    sameSite: 'lax',
     maxAge: 22 * 60 * 60 * 1000
   }
 }));
 
+app.use('/api/customers', customerRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/payroll', payrollRoutes);
 app.get('/', (req, res) => {
   if (!req.session.user) {
     return res.redirect('/login.html');
   }
   res.redirect('/index.html');
 });
+
+
 
 app.use(express.static('public'));
 
@@ -373,7 +385,7 @@ const PRODUCTION_STATUS = [
 
 app.put(
   '/api/orders/:id/production-status',
-  auth(['admin','quarkmgr']),
+  auth(),
   async (req, res) => {
 
     const { id } = req.params;
@@ -391,6 +403,55 @@ app.put(
     await pool.query(
       'INSERT INTO order_status_log (order_id, status, user_id) VALUES ($1,$2,$3)',
       [id, production_status, req.session.user.id]
+    );
+
+    res.json({ ok: true });
+  }
+);
+
+/* ===== MOVE TO STOCK ===== */
+app.put(
+  '/api/orders/:id/move-to-stock',
+  auth(),
+  async (req, res) => {
+    const { id } = req.params;
+
+    // 1️⃣ ดึงข้อมูล order
+    const r = await pool.query(
+      'SELECT * FROM orders WHERE id = $1',
+      [id]
+    );
+
+    if (!r.rows.length) {
+      return res.status(404).json({ error: 'order not found' });
+    }
+
+    const o = r.rows[0];
+
+    // 2️⃣ เพิ่มเข้า stock
+    await pool.query(`
+      INSERT INTO stock
+      (car_model, car_year, mat_type, mat_color, mat_qty, note)
+      VALUES ($1,$2,$3,$4,$5,$6)
+    `, [
+      o.car_model,
+      o.car_year,
+      o.mat_type,
+      o.mat_color,
+      o.mat_qty,
+      `มาจาก Order ${o.order_no}`
+    ]);
+
+    // 3️⃣ เปลี่ยนสถานะ order
+    await pool.query(
+      'UPDATE orders SET production_status = $1 WHERE id = $2',
+      ['เข้าสต็อก', id]
+    );
+
+    // 4️⃣ log
+    await pool.query(
+      'INSERT INTO order_status_log (order_id, status, user_id) VALUES ($1,$2,$3)',
+      [id, 'เข้าสต็อก', req.session.user.id]
     );
 
     res.json({ ok: true });
@@ -535,6 +596,10 @@ app.delete('/api/users/:id', auth(['admin']), async (req, res) => {
   }
 });
 
+app.get('/api/employees', async (req, res) => {
+  const result = await pool.query('SELECT id, name, salary FROM employees ORDER BY id');
+  res.json(result.rows);
+});
 
 
 /* ================= START ================= */

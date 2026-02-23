@@ -151,6 +151,7 @@ button:disabled {
     </div>
 
     <div class="status-buttons" id="statusButtons"></div>
+    <div class="status-buttons" id="specialButtons" style="margin-top:10px;"></div>
   </div>
 
   <!-- QR -->
@@ -174,13 +175,13 @@ const STATUS_FLOW = [
 ];
 
 const STATUS_LABEL = {
-  'สั่งงาน': 'Ordered',
-  'ตัด': 'Cutting',
-  'ประกบ': 'Sewing 1',
-  'กุ๊น': 'Sewing 2',
-  'QC': 'Quality Check',
-  'ส่งออก': 'Shipped',
-  'เข้าสต็อก': 'In Stock'
+  'สั่งงาน': 'สั่งงาน',
+  'ตัด': 'ตัด',
+  'ประกบ': 'ประกบ',
+  'กุ๊น': 'กุ๊น',
+  'QC': 'QC',
+  'ส่งออก': 'ส่งออก',
+  'เข้าสต็อก': 'เข้าสต็อก'
 };
 
 const id = new URLSearchParams(location.search).get('id');
@@ -223,6 +224,7 @@ async function loadOrder() {
 
 
   renderStatusButtons(currentStatus);
+  renderSpecialButtons(currentStatus);
   renderQR(o.id);
 }
 
@@ -249,6 +251,35 @@ function renderStatusButtons(current) {
   });
 }
 
+function renderSpecialButtons(current) {
+  const wrap = document.getElementById('specialButtons');
+  wrap.innerHTML = '';
+
+  // ถ้ายกเลิกหรือเข้าสต็อกแล้ว ไม่ต้องแสดงปุ่ม
+  if (current === 'ยกเลิก' || current === 'เข้าสต็อก') return;
+
+  // 🔵 ส่งออก
+  const shipBtn = document.createElement('button');
+  shipBtn.innerText = 'ส่งออก';
+  shipBtn.className = 'btn btn-dark';
+  shipBtn.onclick = () => updateStatus('ส่งออก');
+  wrap.appendChild(shipBtn);
+
+  // 🔴 ยกเลิก
+  const cancelBtn = document.createElement('button');
+  cancelBtn.innerText = 'ยกเลิก';
+  cancelBtn.className = 'btn btn-light';
+  cancelBtn.onclick = () => updateStatus('ยกเลิก');
+  wrap.appendChild(cancelBtn);
+
+  // 🟢 เข้าสต็อก
+  const stockBtn = document.createElement('button');
+  stockBtn.innerText = 'เข้าสต็อก';
+  stockBtn.className = 'btn btn-light';
+  stockBtn.onclick = moveToStock;
+  wrap.appendChild(stockBtn);
+}
+
 async function updateStatus(status) {
   if (!confirm('เปลี่ยนสถานะเป็น "' + status + '" ?')) return;
 
@@ -264,6 +295,21 @@ async function updateStatus(status) {
     loadOrder();
   } else {
     alert('ไม่สามารถเปลี่ยนสถานะได้');
+  }
+}
+
+async function moveToStock() {
+  if (!confirm('ยืนยันนำสินค้าเข้าสต็อก?')) return;
+
+  const res = await authFetch(
+    '/api/orders/' + id + '/move-to-stock',
+    { method: 'PUT' }
+  );
+
+  if (res.ok) {
+    loadOrder();
+  } else {
+    alert('ไม่สามารถเข้าสต็อกได้');
   }
 }
 

@@ -110,37 +110,27 @@ td textarea {
   font-size: 14px;
 }
 
-.signatures {
+.signature-wrapper {
   display: flex;
   justify-content: space-between;
-  margin-top: 28px;
+  align-items: flex-end;   /* ⭐ ให้เส้นอยู่ระดับเดียวกัน */
+  margin-top: 60px;
 }
 
-.signature-box {
+.signature-block {
   width: 45%;
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
 .signature-line {
-  width: 100%;
-  margin-top: 36px;
   border-top: 1px solid #000;
+  margin-top: 40px;  /* ⭐ กำหนดตำแหน่งเส้นเท่ากัน */
   padding-top: 6px;
 }
 
-.sign-date {
-  margin-top: 6px;
-  font-size: 13px;
+.signature-company {
+  margin-bottom: 40px;  /* ⭐ ดันข้อความขึ้น ไม่กระทบเส้น */
 }
-
-.copy-label {
-  font-weight: bold;
-  font-size: 14px;
-}
-
 
 /* ================= PRINT ================= */
 @media print {
@@ -316,17 +306,23 @@ select {
   </div>
 
   <!-- SIGNATURE -->
-<div class="signatures">
-  <div class="signature-box signature-left">
-    <div class="signature-line">ผู้รับสินค้า</div>
-    <div class="sign-date">วันที่ ______ / ______ / ______</div>
+<div class="signature-wrapper">
+
+  <div class="signature-block">
+    <div class="signature-line"></div>
+    ผู้รับสินค้า<br>
+    วันที่ _____ / _____ / _____
   </div>
 
-  <div class="signature-box signature-right">
-    ในนามบริษัท ทริปเปิลบีเทรดดิ้ง จำกัด
-    <div class="signature-line">ผู้รับมอบอำนาจ</div>
-    <div class="sign-date">วันที่ ______ / ______ / ______</div>
+  <div class="signature-block">
+    <div class="signature-company">
+      ในนามบริษัท ทริปเปิลบีเทรดดิ้ง จำกัด
+    </div>
+    <div class="signature-line"></div>
+    ผู้รับมอบอำนาจ<br>
+    วันที่ _____ / _____ / _____
   </div>
+
 </div>
 
 </div>

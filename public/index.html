@@ -214,9 +214,9 @@ async function logout() {
     btnUsers.onclick = () => location.href = 'users.html';
   }
 
-  if (me.role === 'admin' || me.role === 'quarkmgr') {
+  if (me.role === 'admin') {
     salaryBtn.style.display = 'block';
-    salaryBtn.onclick = () => location.href = 'salary.html';
+    salaryBtn.onclick = () => location.href = 'payroll.html';
 
     btnStock.style.display = 'block';
     btnStock.onclick = () => location.href = 'stock.html';
